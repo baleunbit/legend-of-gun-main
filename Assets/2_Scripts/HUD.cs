@@ -7,12 +7,12 @@ public class HUD : MonoBehaviour
     public InfoType type;
 
     Text Text;
-    Slider Slider;
+    Image HealthBarImage;
 
     private void Awake()
     {
         Text = GetComponent<Text>();
-        Slider = GetComponent<Slider>();
+        HealthBarImage = GetComponent<Image>();
     }
 
     private void LateUpdate()
@@ -22,7 +22,11 @@ public class HUD : MonoBehaviour
             case InfoType.Health:
                 float curHealth = GameManager.instance.Health;
                 float maxHealth = GameManager.instance.MaxHealth;
-                Slider.value = curHealth / maxHealth;
+
+                if (HealthBarImage != null)
+                {
+                    HealthBarImage.fillAmount = curHealth / maxHealth;
+                }
                 break;
         }
     }
