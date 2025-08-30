@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
+using Slider = UnityEngine.UI.Slider;
 
 public class HUD : MonoBehaviour
 {
@@ -7,12 +9,12 @@ public class HUD : MonoBehaviour
     public InfoType type;
 
     Text Text;
-    Image HealthBarImage;
+    Slider mySlider;
 
     private void Awake()
     {
         Text = GetComponent<Text>();
-        HealthBarImage = GetComponent<Image>();
+        mySlider = GetComponent<Slider>();
     }
 
     private void LateUpdate()
@@ -20,14 +22,10 @@ public class HUD : MonoBehaviour
         switch (type)
         {
             case InfoType.Health:
-                float curHealth = GameManager.instance.Health;
-                float maxHealth = GameManager.instance.MaxHealth;
-
-                if (HealthBarImage != null)
-                {
-                    HealthBarImage.fillAmount = curHealth / maxHealth;
-                }
-                break;
-        }
+        float curHealth = GameManager.instance.Health;
+        float maxHealth = GameManager.instance.MaxHealth;
+        mySlider.value = curHealth / maxHealth;
+        break;
+    }
     }
 }

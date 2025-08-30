@@ -1,31 +1,47 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class DungeonGenerator : MonoBehaviour
 {
-    public GameObject roomPrefab;   // 생성할 Room 프리팹
-    public int roomCount = 5;      // 몇 개의 방을 생성할지
-    public float roomSpacing = 10f; // 방 사이 거리
+    public GameObject roomPrefab;
+    public int numberOfRooms = 10;
+    public Vector2 roomSize = new Vector2(20, 15);
 
-    private List<GameObject> rooms = new List<GameObject>();
+    private List<GameObject> spawnedRooms = new List<GameObject>();
 
     void Start()
     {
-        GenerateRooms();
+        GenerateDungeon();
     }
 
-    void GenerateRooms()
+    void GenerateDungeon()
     {
-        for (int i = 0; i < roomCount; i++)
+        for (int i = 0; i < numberOfRooms; i++)
         {
-            Vector2 pos = new Vector2(Random.Range(-5, 5), Random.Range(-5, 5)) * roomSpacing;
-            GameObject room = Instantiate(roomPrefab, pos, Quaternion.identity, transform);
-            rooms.Add(room);
+            Vector2 spawnPos = new Vector2(
+                Random.Range(-50, 50),
+                Random.Range(-50, 50)
+            );
+
+            // 방 생성할 영역 정의 (Box 영역 크기는 방 크기랑 맞춰야 함)
+            Collider2D hit = Physics2D.OverlapBox(spawnPos, roomSize, 0);
+
+            if (hit == null) // 충돌 없으면 방 생성
+            {
+                GameObject room = Instantiate(roomPrefab, spawnPos, Quaternion.identity);
+                spawnedRooms.Add(room);
+            }
+            else
+            {
+                Debug.Log("Room overlapped, skipped.");
+            }
         }
     }
 
-    public List<GameObject> GetRooms()
+    // Scene 뷰에서 Box 영역 디버그용
+    void OnDrawGizmos()
     {
-        return rooms;
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(Vector3.zero, roomSize);
     }
 }
