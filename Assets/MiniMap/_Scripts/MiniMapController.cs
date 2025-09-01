@@ -135,25 +135,42 @@ public class MiniMapController : MonoBehaviour {
 		//Set the camera
 		SetCam ();
 	}
-	void SetupRenderTexture(){
-		//Release the old texture, otherwise memory leak happens
-		//This line shows as error log in Unity versions < 5.4, which is a Unity bug. But harmless.
-		if(renderTex.IsCreated()) renderTex.Release ();
-		//Setup render texture and resize it.
-		//New render texture was created, as premade render texture's size can't be changed
-		renderTex = new RenderTexture ((int)mapPanelRect.sizeDelta.x, (int)mapPanelRect.sizeDelta.y, 24);
-		//Create only creates new render texture in memory, if it is not already created
-		renderTex.Create ();
+    void SetupRenderTexture()
+    {
+        int width = Mathf.Max(1, (int)mapPanelRect.sizeDelta.x);
+        int height = Mathf.Max(1, (int)mapPanelRect.sizeDelta.y);
 
-		mapMaterial.mainTexture = renderTex;
-		mapCamera.targetTexture = renderTex;
+        if (mapCamera != null)
+            mapCamera.targetTexture = null; // 먼저 해제
 
-		//Cheat to refresh the minimap panel texture;
-		mapPanelMaskRect.gameObject.SetActive (false);
-		mapPanelMaskRect.gameObject.SetActive (true);
-	}
+        if (renderTex != null)
+        {
+            if (renderTex.IsCreated())
+                renderTex.Release();
+#if UNITY_EDITOR
+            DestroyImmediate(renderTex);
+#else
+        Destroy(renderTex);
+#endif
+            renderTex = null;
+        }
 
-	void SetCam(){
+        renderTex = new RenderTexture(width, height, 24);
+        renderTex.name = "MiniMapRenderTexture";
+        renderTex.Create();
+
+        if (mapMaterial != null)
+            mapMaterial.mainTexture = renderTex;
+        if (mapCamera != null)
+            mapCamera.targetTexture = renderTex;
+
+        // Refresh minimap panel
+        mapPanelMaskRect.gameObject.SetActive(false);
+        mapPanelMaskRect.gameObject.SetActive(true);
+    }
+
+
+    void SetCam(){
 		mapCamera.orthographicSize = camSize;
 		mapCamera.farClipPlane = camFarClip;
 		if (target == null) {

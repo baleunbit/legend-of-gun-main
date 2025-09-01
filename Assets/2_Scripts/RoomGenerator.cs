@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class DungeonGenerator : MonoBehaviour
+public class RoomGenerator : MonoBehaviour
 {
     public GameObject roomPrefab;
     public int numberOfRooms = 10;
@@ -11,10 +11,10 @@ public class DungeonGenerator : MonoBehaviour
 
     void Start()
     {
-        GenerateDungeon();
+        GenerateRooms();
     }
 
-    void GenerateDungeon()
+    void GenerateRooms()
     {
         for (int i = 0; i < numberOfRooms; i++)
         {
@@ -23,12 +23,16 @@ public class DungeonGenerator : MonoBehaviour
                 Random.Range(-50, 50)
             );
 
-            // 방 생성할 영역 정의 (Box 영역 크기는 방 크기랑 맞춰야 함)
             Collider2D hit = Physics2D.OverlapBox(spawnPos, roomSize, 0);
 
-            if (hit == null) // 충돌 없으면 방 생성
+            if (hit == null) // 겹치지 않으면 생성
             {
                 GameObject room = Instantiate(roomPrefab, spawnPos, Quaternion.identity);
+                Room roomScript = room.GetComponent<Room>();
+                if (roomScript != null)
+                {
+                    roomScript.roomID = i;
+                }
                 spawnedRooms.Add(room);
             }
             else
@@ -38,7 +42,13 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    // Scene 뷰에서 Box 영역 디버그용
+    public GameObject GetRoom(int index)
+    {
+        if (index >= 0 && index < spawnedRooms.Count)
+            return spawnedRooms[index];
+        return null;
+    }
+
     void OnDrawGizmos()
     {
         Gizmos.color = Color.red;

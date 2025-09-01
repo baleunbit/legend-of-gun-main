@@ -2,15 +2,27 @@ using UnityEngine;
 
 public class Door : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    public int targetRoomIndex;
+    private RoomGenerator roomGen;
+
     void Start()
     {
-        
+        roomGen = FindFirstObjectByType<RoomGenerator>();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        
+        if (other.CompareTag("Player"))
+        {
+            GameObject targetRoom = roomGen.GetRoom(targetRoomIndex);
+            if (targetRoom != null)
+            {
+                Room roomScript = targetRoom.GetComponent<Room>();
+                if (roomScript != null && roomScript.entryPoint != null)
+                {
+                    other.transform.position = roomScript.entryPoint.position;
+                }
+            }
+        }
     }
 }
