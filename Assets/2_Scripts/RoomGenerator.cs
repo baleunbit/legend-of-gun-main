@@ -18,10 +18,19 @@ public class RoomGenerator : MonoBehaviour
     void GenerateRooms()
     {
         Vector2 startPos = Vector2.zero;
+        GameObject existingRoom = GameObject.Find("StartRoom");
+        Vector2 existingPos = existingRoom != null ? (Vector2)existingRoom.transform.position : Vector2.zero;
 
         for (int i = 0; i < numberOfRooms; i++)
         {
             Vector2 spawnPos = startPos + new Vector2(0, i * roomSize.y);
+
+            // 씬에 이미 있는 첫 번째 방 위치 체크
+            if (Vector2.Distance(spawnPos, existingPos) < Mathf.Max(roomSize.x, roomSize.y))
+            {
+                Debug.Log("Skipping spawn at existing first room position");
+                continue; // 겹치지 않도록 스킵
+            }
 
             GameObject room = Instantiate(roomPrefab, spawnPos, Quaternion.identity);
             Room roomScript = room.GetComponent<Room>();
