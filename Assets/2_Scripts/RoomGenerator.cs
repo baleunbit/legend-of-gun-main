@@ -12,32 +12,54 @@ public class RoomGenerator : MonoBehaviour
     void Start()
     {
         GenerateRooms();
+        ConnectDoors();
     }
 
     void GenerateRooms()
     {
+        Vector2 startPos = Vector2.zero;
+
         for (int i = 0; i < numberOfRooms; i++)
         {
-            Vector2 spawnPos = new Vector2(
-                Random.Range(-50, 50),
-                Random.Range(-50, 50)
-            );
+            Vector2 spawnPos = startPos + new Vector2(0, i * roomSize.y);
 
-            Collider2D hit = Physics2D.OverlapBox(spawnPos, roomSize, 0);
+            GameObject room = Instantiate(roomPrefab, spawnPos, Quaternion.identity);
+            Room roomScript = room.GetComponent<Room>();
 
-            if (hit == null) // 겹치지 않으면 생성
+            if (roomScript != null)
             {
-                GameObject room = Instantiate(roomPrefab, spawnPos, Quaternion.identity);
-                Room roomScript = room.GetComponent<Room>();
-                if (roomScript != null)
-                {
-                    roomScript.roomID = i;
-                }
-                spawnedRooms.Add(room);
+                roomScript.roomID = i;
+                roomScript.isStartRoom = (i == 0);
+                roomScript.isEndRoom = (i == numberOfRooms - 1);
             }
-            else
+
+            spawnedRooms.Add(room);
+        }
+    }
+
+    void ConnectDoors()
+    {
+        for (int i = 0; i < spawnedRooms.Count; i++)
+        {
+            Room roomScript = spawnedRooms[i].GetComponent<Room>();
+
+            if (roomScript != null)
             {
-                Debug.Log("Room overlapped, skipped.");
+                // 위로 갈 문
+                if (i < spawnedRooms.Count - 1)
+                {
+                    Door upDoor = roomScript.nextDoor;
+                    if (upDoor != null)
+                        upDoor.targetRoomIndex = i + 1;
+                }
+
+                // 아래로 갈 문
+                if (i > 0)
+                {
+                    Door downDoor = roomScript.prevDoor;
+                    if (downDoor != null)
+                        downDoor.targetRoomIndex = i - 1;
+                }
             }
         }
     }
@@ -47,11 +69,5 @@ public class RoomGenerator : MonoBehaviour
         if (index >= 0 && index < spawnedRooms.Count)
             return spawnedRooms[index];
         return null;
-    }
-
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(Vector3.zero, roomSize);
     }
 }

@@ -17,10 +17,10 @@ public class Door : MonoBehaviour
             GameObject targetRoom = roomGen.GetRoom(targetRoomIndex);
             if (targetRoom != null)
             {
-                Room roomScript = targetRoom.GetComponent<Room>();
-                if (roomScript != null && roomScript.entryPoint != null)
+                Transform entry = targetRoom.transform.Find("EntryPoint");
+                if (entry != null)
                 {
-                    other.transform.position = roomScript.entryPoint.position;
+                    other.transform.position = entry.position;
                 }
             }
         }

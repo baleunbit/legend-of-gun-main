@@ -7,7 +7,7 @@ public class Room : MonoBehaviour
     public bool isStartRoom;
     public bool isEndRoom;
 
-    [Header("Points")]
-    public Transform entryPoint; // 플레이어가 들어올 위치
-    public Transform exitPoint;  // 필요하다면 나가는 문 위치
+    [Header("Doors")]
+    public Door nextDoor;  // 위쪽 문
+    public Door prevDoor;  // 아래쪽 문
 }
