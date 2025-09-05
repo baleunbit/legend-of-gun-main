@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Mob : MonoBehaviour
@@ -9,6 +10,11 @@ public class Mob : MonoBehaviour
 
     Rigidbody2D rigid;
     SpriteRenderer spriter;
+
+    internal void OnDamage(float damage)
+    {
+        throw new NotImplementedException();
+    }
 
     void Awake()
     {

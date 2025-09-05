@@ -42,6 +42,9 @@ public class Bullet : MonoBehaviour
         if (collision.CompareTag("Room") || collision.name == "Room" || collision.CompareTag("Player"))
             return;
 
+        if (collision.CompareTag("GameObject"))
+            return;
+
         // 그 외에는 총알 삭제
         Destroy(gameObject);
     }

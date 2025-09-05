@@ -6,6 +6,11 @@ TagManager:
   tags:
   - Mob
   - Room
+  - Ground
+  - Bullet
+  - Area
+  - Enemy
+  - GameObject
   layers:
   - Default
   - TransparentFX
