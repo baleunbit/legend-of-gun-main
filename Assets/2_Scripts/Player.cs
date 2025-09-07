@@ -51,7 +51,6 @@ public class player : MonoBehaviour
             spriter.flipX = true; // 왼쪽으로 이동
         }
 
-        ani.SetFloat("Speed", Input.magnitude);
     }
 
     void FixedUpdate()

@@ -3,80 +3,75 @@ using System.Collections.Generic;
 
 public class RoomGenerator : MonoBehaviour
 {
-    public GameObject roomPrefab;
-    public int numberOfRooms = 10;
+    public List<GameObject> roomPrefabs; // 여러 테마 프리팹
+    public int numberOfRooms = 6;
     public Vector2 roomSize = new Vector2(20, 15);
 
-    private List<GameObject> spawnedRooms = new List<GameObject>();
+    private List<GameObject> _rooms = new List<GameObject>();
 
     void Start()
     {
+        // 씬에 이미 있는 Room 등록
+        Room[] existing = FindFirstObjectsOfType<Room>();
+        foreach (var r in existing)
+        {
+            _rooms.Add(r.gameObject);
+        }
+
         GenerateRooms();
-        ConnectDoors();
+    }
+
+    private T[] FindFirstObjectsOfType<T>()
+    {
+        throw new System.NotImplementedException();
     }
 
     void GenerateRooms()
     {
-        Vector2 startPos = Vector2.zero;
-        GameObject existingRoom = GameObject.Find("StartRoom");
-        Vector2 existingPos = existingRoom != null ? (Vector2)existingRoom.transform.position : Vector2.zero;
-
         for (int i = 0; i < numberOfRooms; i++)
         {
-            Vector2 spawnPos = startPos + new Vector2(0, i * roomSize.y);
+            Vector2 pos;
+            int tries = 0;
 
-            // 씬에 이미 있는 첫 번째 방 위치 체크
-            if (Vector2.Distance(spawnPos, existingPos) < Mathf.Max(roomSize.x, roomSize.y))
+            do
             {
-                Debug.Log("Skipping spawn at existing first room position");
-                continue; // 겹치지 않도록 스킵
+                pos = new Vector2(Random.Range(-50, 50), Random.Range(-50, 50));
+                tries++;
+            }
+            while (IsOverlapping(pos) && tries < 20);
+
+            if (tries >= 20)
+            {
+                Debug.Log($"Room {i} skipped (overlap with existing)");
+                continue;
             }
 
-            GameObject room = Instantiate(roomPrefab, spawnPos, Quaternion.identity);
-            Room roomScript = room.GetComponent<Room>();
+            GameObject prefab = roomPrefabs[Random.Range(0, roomPrefabs.Count)];
+            var room = Instantiate(prefab, pos, Quaternion.identity);
 
-            if (roomScript != null)
-            {
-                roomScript.roomID = i;
-                roomScript.isStartRoom = (i == 0);
-                roomScript.isEndRoom = (i == numberOfRooms - 1);
-            }
+            var r = room.GetComponent<Room>();
+            if (r) r.roomID = i;
 
-            spawnedRooms.Add(room);
+            _rooms.Add(room);
         }
     }
 
-    void ConnectDoors()
+    bool IsOverlapping(Vector2 newPos)
     {
-        for (int i = 0; i < spawnedRooms.Count; i++)
+        foreach (var r in _rooms)
         {
-            Room roomScript = spawnedRooms[i].GetComponent<Room>();
+            Vector2 existing = r.transform.position;
+            float dx = Mathf.Abs(newPos.x - existing.x);
+            float dy = Mathf.Abs(newPos.y - existing.y);
 
-            if (roomScript != null)
-            {
-                // 위로 갈 문
-                if (i < spawnedRooms.Count - 1)
-                {
-                    Door upDoor = roomScript.nextDoor;
-                    if (upDoor != null)
-                        upDoor.targetRoomIndex = i + 1;
-                }
-
-                // 아래로 갈 문
-                if (i > 0)
-                {
-                    Door downDoor = roomScript.prevDoor;
-                    if (downDoor != null)
-                        downDoor.targetRoomIndex = i - 1;
-                }
-            }
+            if (dx < roomSize.x && dy < roomSize.y)
+                return true; // 겹침
         }
+        return false;
     }
 
-    public GameObject GetRoom(int index)
+    internal GameObject GetRoom(int targetRoomIndex)
     {
-        if (index >= 0 && index < spawnedRooms.Count)
-            return spawnedRooms[index];
-        return null;
+        throw new System.NotImplementedException();
     }
 }
