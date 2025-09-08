@@ -5,9 +5,7 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     public bool isGameOver = false;
     public bool isPause = false;
-    [Header("Player Health")]
-    public int MaxHealth = 100;
-    public int Health;
+
     private float gameTime;
     private float maxGameTime;
 
@@ -22,14 +20,10 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    private void Start()
-    {
-        Health = MaxHealth;
-    }
+
     private void Update()
     {
         gameTime += Time.deltaTime;
-
         if (gameTime > maxGameTime)
         {
             gameTime = maxGameTime;

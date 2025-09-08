@@ -1,13 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
-using System.Linq;
 
-public class player : MonoBehaviour
+public class Player : MonoBehaviour
 {
     [Header("이동 설정")]
     public float moveSpeed = 3f;
-    private Vector2 Input;
+    private Vector2 input;
 
     SpriteRenderer spriter;
     Animator ani;
@@ -19,7 +17,7 @@ public class player : MonoBehaviour
     private float mobDamageTimer = 0f;
 
     [Header("UI")]
-    public Slider healthBar; // 에디터에서 Health Bar(Slider) 연결
+    public Image healthBarImage; // 체력바 Image (FillAmount로 제어)
 
     void Start()
     {
@@ -28,43 +26,28 @@ public class player : MonoBehaviour
         ani = GetComponent<Animator>();
 
         health = maxHealth;
-        if (healthBar != null)
-        {
-            healthBar.maxValue = maxHealth;
-            healthBar.value = health;
-        }
+        UpdateHealthBar();
     }
 
     void Update()
     {
-       
-    }
-
-    private void LateUpdate()
-    {
-        if (Input.x > 0)
-        {
-            spriter.flipX = false; // 오른쪽으로 이동
-        }
-        else if (Input.x < 0)
-        {
-            spriter.flipX = true; // 왼쪽으로 이동
-        }
-
+        // 이동 입력
+        input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
     }
 
     void FixedUpdate()
     {
-        HandleMovement();
+        rb.linearVelocity = input * moveSpeed;
     }
 
-    void HandleMovement()
+    private void LateUpdate()
     {
-        Input = new Vector2(UnityEngine.Input.GetAxisRaw("Horizontal"), UnityEngine.Input.GetAxisRaw("Vertical")).normalized;
-        rb.linearVelocity = Input * moveSpeed;
+        if (input.x > 0)
+            spriter.flipX = false;
+        else if (input.x < 0)
+            spriter.flipX = true;
     }
 
-    // Mob 태그가 있는 오브젝트에 닿아 있으면 1초마다 5 피해
     private void OnCollisionStay2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Mob"))
@@ -72,15 +55,12 @@ public class player : MonoBehaviour
             mobDamageTimer += Time.fixedDeltaTime;
             if (mobDamageTimer >= 1f)
             {
-                health -= 5;
+                TakeDamage(5);
                 mobDamageTimer = 0f;
-                Debug.Log("플레이어가 몹에 닿아 피해를 입음! 현재 체력: " + health);
-                UpdateHealthBar();
             }
         }
     }
 
-    // 충돌이 끝나면 타이머 초기화
     private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Mob"))
@@ -89,12 +69,20 @@ public class player : MonoBehaviour
         }
     }
 
-    // Health Bar 갱신 함수
-    private void UpdateHealthBar()
+    public void TakeDamage(int damage)
     {
-        if (healthBar != null)
+        health -= damage;
+        health = Mathf.Clamp(health, 0, maxHealth);
+        Debug.Log($"플레이어가 데미지 {damage} 받음! 현재 체력: {health}");
+        UpdateHealthBar();
+    }
+
+    void UpdateHealthBar()
+    {
+        Debug.Log($"fill={healthBarImage.fillAmount}");
+        if (healthBarImage != null)
         {
-            healthBar.value = health;
+            healthBarImage.fillAmount = (float)health / maxHealth;
         }
     }
 }

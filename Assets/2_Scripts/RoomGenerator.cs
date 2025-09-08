@@ -1,29 +1,24 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
 
 public class RoomGenerator : MonoBehaviour
 {
-    public List<GameObject> roomPrefabs; // ¿©·¯ Å×¸¶ ÇÁ¸®ÆÕ
+    public List<GameObject> roomPrefabs; // ì—¬ëŸ¬ í…Œë§ˆ í”„ë¦¬íŒ¹
     public int numberOfRooms = 6;
-    public Vector2 roomSize = new Vector2(20, 15);
+    public Vector2 roomSize = new Vector2(20, 15); // ë°© ê°„ ìµœì†Œ ê°„ê²©
 
     private List<GameObject> _rooms = new List<GameObject>();
 
     void Start()
     {
-        // ¾À¿¡ ÀÌ¹Ì ÀÖ´Â Room µî·Ï
-        Room[] existing = FindFirstObjectsOfType<Room>();
+        // ðŸ”¥ ìµœì‹  API ì‚¬ìš©
+        Room[] existing = FindObjectsByType<Room>(FindObjectsSortMode.None);
         foreach (var r in existing)
         {
             _rooms.Add(r.gameObject);
         }
 
         GenerateRooms();
-    }
-
-    private T[] FindFirstObjectsOfType<T>()
-    {
-        throw new System.NotImplementedException();
     }
 
     void GenerateRooms()
@@ -33,6 +28,7 @@ public class RoomGenerator : MonoBehaviour
             Vector2 pos;
             int tries = 0;
 
+            // ìµœëŒ€ 20ë²ˆê¹Œì§€ ëžœë¤ ìœ„ì¹˜ ìž¬ì‹œë„
             do
             {
                 pos = new Vector2(Random.Range(-50, 50), Random.Range(-50, 50));
@@ -42,7 +38,7 @@ public class RoomGenerator : MonoBehaviour
 
             if (tries >= 20)
             {
-                Debug.Log($"Room {i} skipped (overlap with existing)");
+                Debug.Log($"Room {i} skipped (overlap with existing rooms)");
                 continue;
             }
 
@@ -65,13 +61,15 @@ public class RoomGenerator : MonoBehaviour
             float dy = Mathf.Abs(newPos.y - existing.y);
 
             if (dx < roomSize.x && dy < roomSize.y)
-                return true; // °ãÄ§
+                return true; // ê²¹ì¹¨
         }
         return false;
     }
 
     internal GameObject GetRoom(int targetRoomIndex)
     {
-        throw new System.NotImplementedException();
+        if (targetRoomIndex < 0 || targetRoomIndex >= _rooms.Count)
+            return null;
+        return _rooms[targetRoomIndex];
     }
 }
