@@ -21,6 +21,10 @@ public class MobSpawner : MonoBehaviour
     [Header("방 내부 판정(선택)")]
     public LayerMask interiorMask;           // 방 바닥/실내 레이어. 비워두면 콜라이더로 판정
 
+    [Header("스폰 크기 설정")]
+    public bool forceNormalizeScale = true;              // true면 스폰 시 크기 강제
+    public Vector3 targetWorldScale = new(1f, 1f, 1f);   // 원하는 월드 기준 스케일
+
     [Header("참조(선택)")]
     public Rigidbody2D playerRigidbody;      // Mob.target 주입용
     public bool bindPlayerTargetIfPossible = true;
@@ -60,37 +64,18 @@ public class MobSpawner : MonoBehaviour
     {
         if (enemyPrefabs == null || enemyPrefabs.Count == 0) return;
 
-        // 방 콜라이더/스폰포인트 수집 (Room 메서드/겟터에 의존하지 않음)
         var roomGO = room.gameObject;
         var colliders = roomGO.GetComponentsInChildren<Collider2D>(true);
 
-        // AABB (Room에 AABB 프로퍼티가 있다면 그거 써도 되고, 없으면 직접 계산)
-        Bounds aabb;
-        {
-            // Room에 AABB 프로퍼티가 있는 경우 사용
-            var aabbProp = room.GetType().GetProperty("AABB");
-            if (aabbProp != null)
-                aabb = (Bounds)aabbProp.GetValue(room);
-            else
-            {
-                Bounds? b = null;
-                foreach (var c in colliders) { if (c == null) continue; b = b == null ? c.bounds : Enc(b.Value, c.bounds); }
-                if (b == null)
-                {
-                    var rends = roomGO.GetComponentsInChildren<Renderer>(true);
-                    foreach (var r in rends) { if (r == null) continue; b = b == null ? r.bounds : Enc(b.Value, r.bounds); }
-                }
-                aabb = b ?? new Bounds(roomGO.transform.position, Vector3.one);
-            }
-        }
-
+        // AABB
+        Bounds aabb = room.AABB;
         Vector2 center = aabb.center;
         Vector2 size = new Vector2(aabb.size.x, aabb.size.y);
         Vector2 min = center - size * 0.5f + Vector2.one * spawnPadding;
         Vector2 max = center + size * 0.5f - Vector2.one * spawnPadding;
 
-        // SpawnPoint들 (컴포넌트 기준)
-        var points = roomGO.GetComponentsInChildren<SpawnPoint>(true).Select(s => s.transform).ToArray();
+        // SpawnPoint
+        var points = room.SpawnPoints;
 
         int enemyCount = Random.Range(minEnemiesPerRoom, maxEnemiesPerRoom + 1);
         List<Vector2> occupied = new();
@@ -140,56 +125,74 @@ public class MobSpawner : MonoBehaviour
 
             if (!placed) continue;
 
-            var enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
-            enemy.transform.SetParent(roomGO.transform, true);
-
-            if (bindPlayerTargetIfPossible && playerRigidbody != null)
-            {
-                var mob = enemy.GetComponent<Mob>();
-                if (mob != null && mob.target == null)
-                    mob.target = playerRigidbody;
-            }
-
+            PlaceEnemy(roomGO, prefab, spawnPos);
             occupied.Add(spawnPos);
         }
+    }
 
-        // ===== 로컬 유틸 =====
-        bool Blocked(Vector2 p) => Physics2D.OverlapCircle(p, 0.1f, obstacleMask);
-        bool TooClose(List<Vector2> used, Vector2 p) => used.Any(u => Vector2.Distance(u, p) < avoidOthersRadius);
+    void PlaceEnemy(GameObject roomGO, GameObject prefab, Vector2 pos)
+    {
+        var enemy = Instantiate(prefab, pos, Quaternion.identity);
 
-        bool IsInside(Vector2 p, Collider2D[] cols)
+        // 부모 지정
+        enemy.transform.SetParent(roomGO.transform, true);
+
+        // ✅ 스케일 고정 (월드 스케일 기준)
+        if (forceNormalizeScale)
+            SetWorldScale(enemy.transform, targetWorldScale);
+
+        // 플레이어를 타겟으로 바인딩
+        if (bindPlayerTargetIfPossible && playerRigidbody != null)
         {
-            // interiorMask가 지정되면 그 레이어 안에서만 허용
-            if (interiorMask.value != 0)
-            {
-                var hit = Physics2D.OverlapPoint(p, interiorMask);
-                if (!hit) return false;
-            }
+            var mob = enemy.GetComponent<Mob>();
+            if (mob != null && mob.target == null)
+                mob.target = playerRigidbody;
+        }
+    }
 
-            // 콜라이더가 없으면 내부 판정 불가 → 랜덤 스폰 금지
-            if (cols == null || cols.Length == 0) return false;
+    // ==== 유틸 ====
+    bool Blocked(Vector2 p) => Physics2D.OverlapCircle(p, 0.1f, obstacleMask);
+    bool TooClose(List<Vector2> used, Vector2 p) => used.Any(u => Vector2.Distance(u, p) < avoidOthersRadius);
 
-            foreach (var c in cols)
-                if (c != null && c.OverlapPoint(p))
-                    return true;
-
-            return false;
+    bool IsInside(Vector2 p, Collider2D[] cols)
+    {
+        if (interiorMask.value != 0)
+        {
+            var hit = Physics2D.OverlapPoint(p, interiorMask);
+            if (!hit) return false;
         }
 
-        Vector2 SnapInside(Vector2 p, Collider2D[] cols)
-        {
-            if (cols == null || cols.Length == 0) return p;
-            float best = float.MaxValue; Vector2 bestPt = p;
-            foreach (var c in cols)
-            {
-                if (c == null) continue;
-                var cp = (Vector2)c.ClosestPoint(p);
-                float d = (cp - p).sqrMagnitude;
-                if (d < best) { best = d; bestPt = cp; }
-            }
-            return bestPt;
-        }
+        if (cols == null || cols.Length == 0) return false;
 
-        Bounds Enc(Bounds a, Bounds b) { a.Encapsulate(b); return a; }
+        foreach (var c in cols)
+            if (c != null && c.OverlapPoint(p))
+                return true;
+
+        return false;
+    }
+
+    Vector2 SnapInside(Vector2 p, Collider2D[] cols)
+    {
+        if (cols == null || cols.Length == 0) return p;
+        float best = float.MaxValue; Vector2 bestPt = p;
+        foreach (var c in cols)
+        {
+            if (c == null) continue;
+            var cp = (Vector2)c.ClosestPoint(p);
+            float d = (cp - p).sqrMagnitude;
+            if (d < best) { best = d; bestPt = cp; }
+        }
+        return bestPt;
+    }
+
+    void SetWorldScale(Transform t, Vector3 worldScale)
+    {
+        var parent = t.parent;
+        Vector3 parentLossy = parent ? parent.lossyScale : Vector3.one;
+        t.localScale = new Vector3(
+            parentLossy.x != 0 ? worldScale.x / parentLossy.x : worldScale.x,
+            parentLossy.y != 0 ? worldScale.y / parentLossy.y : worldScale.y,
+            parentLossy.z != 0 ? worldScale.z / parentLossy.z : worldScale.z
+        );
     }
 }
