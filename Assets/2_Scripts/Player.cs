@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class Player : MonoBehaviour
 {
     [Header("이동 설정")]
-    public float moveSpeed = 3f;
+    public float moveSpeed = 10f;
     private Vector2 input;
 
     SpriteRenderer spriter;

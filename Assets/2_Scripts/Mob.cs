@@ -3,7 +3,7 @@ using UnityEngine;
 public class Mob : MonoBehaviour
 {
     [Header("이동")]
-    public float Speed = 2f;
+    public float Speed = 7.5f;
 
     [Header("공격")]
     public int minDamage = 3;

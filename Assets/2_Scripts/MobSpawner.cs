@@ -21,10 +21,6 @@ public class MobSpawner : MonoBehaviour
     [Header("방 내부 판정(선택)")]
     public LayerMask interiorMask;           // 방 바닥/실내 레이어. 비워두면 콜라이더로 판정
 
-    [Header("스폰 크기 설정")]
-    public bool forceNormalizeScale = true;              // true면 스폰 시 크기 강제
-    public Vector3 targetWorldScale = new(1f, 1f, 1f);   // 원하는 월드 기준 스케일
-
     [Header("참조(선택)")]
     public Rigidbody2D playerRigidbody;      // Mob.target 주입용
     public bool bindPlayerTargetIfPossible = true;
@@ -137,10 +133,6 @@ public class MobSpawner : MonoBehaviour
         // 부모 지정
         enemy.transform.SetParent(roomGO.transform, true);
 
-        // ✅ 스케일 고정 (월드 스케일 기준)
-        if (forceNormalizeScale)
-            SetWorldScale(enemy.transform, targetWorldScale);
-
         // 플레이어를 타겟으로 바인딩
         if (bindPlayerTargetIfPossible && playerRigidbody != null)
         {
@@ -183,16 +175,5 @@ public class MobSpawner : MonoBehaviour
             if (d < best) { best = d; bestPt = cp; }
         }
         return bestPt;
-    }
-
-    void SetWorldScale(Transform t, Vector3 worldScale)
-    {
-        var parent = t.parent;
-        Vector3 parentLossy = parent ? parent.lossyScale : Vector3.one;
-        t.localScale = new Vector3(
-            parentLossy.x != 0 ? worldScale.x / parentLossy.x : worldScale.x,
-            parentLossy.y != 0 ? worldScale.y / parentLossy.y : worldScale.y,
-            parentLossy.z != 0 ? worldScale.z / parentLossy.z : worldScale.z
-        );
     }
 }
