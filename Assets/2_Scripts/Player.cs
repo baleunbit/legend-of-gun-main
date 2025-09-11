@@ -42,6 +42,7 @@ public class Player : MonoBehaviour
 
     private void LateUpdate()
     {
+        ani.SetFloat("Speed", rb.linearVelocity.magnitude);
         if (input.x > 0)
             spriter.flipX = false;
         else if (input.x < 0)

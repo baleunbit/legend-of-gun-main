@@ -204,9 +204,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 1024
+        y: 1023
         width: 256
-        height: 256
+        height: 257
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -424,7 +424,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1024
-        y: 768
+        y: 765
         width: 256
         height: 256
       alignment: 0
@@ -471,8 +471,8 @@ TextureImporter:
         y: 508
         width: 256
         height: 256
-      alignment: 9
-      pivot: {x: 0.4725423, y: 0.11559534}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -490,11 +490,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 258
-        y: 510
+        y: 508
         width: 256
         height: 256
-      alignment: 9
-      pivot: {x: 0.4725423, y: 0.11559534}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -515,8 +515,8 @@ TextureImporter:
         y: 508
         width: 256
         height: 256
-      alignment: 9
-      pivot: {x: 0.4725423, y: 0.11559534}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -537,8 +537,8 @@ TextureImporter:
         y: 510
         width: 256
         height: 256
-      alignment: 9
-      pivot: {x: 0.4725423, y: 0.11559534}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -559,8 +559,8 @@ TextureImporter:
         y: 508
         width: 256
         height: 256
-      alignment: 9
-      pivot: {x: 0.4725423, y: 0.11559534}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -578,11 +578,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 257
+        y: 252
         width: 256
         height: 256
-      alignment: 9
-      pivot: {x: 0.4725423, y: 0.11559534}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -599,12 +599,12 @@ TextureImporter:
       name: 1756762797687-ezgif.com-gif-to-sprite-converter_18
       rect:
         serializedVersion: 2
-        x: 258
-        y: 257
+        x: 256
+        y: 252
         width: 256
         height: 256
-      alignment: 9
-      pivot: {x: 0.4725423, y: 0.11559534}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -666,7 +666,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 768
-        y: 260
+        y: 255
         width: 256
         height: 256
       alignment: 0
