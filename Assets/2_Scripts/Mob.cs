@@ -1,28 +1,28 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class Mob : MonoBehaviour
 {
-    [Header("ÀÌµ¿")]
+    [Header("ì´ë™")]
     public float Speed = 7.5f;
 
-    [Header("°ø°İ")]
+    [Header("ê³µê²©")]
     public int minDamage = 3;
     public int maxDamage = 5;
     public float attackCooldown = 1f;
 
-    [Header("Å½Áö (¹ß°ß Àü±îÁö¸¸ »ç¿ë)")]
-    public float detectRadius = 4f;           // ±ÙÁ¢ °¨Áö(Ã»°¢/ÁÖº¯)
-    public float viewDistance = 6f;           // ½Ã¾ß °Å¸®
-    [Range(0, 180)] public float fovAngle = 80f; // ÁÂ¿ì ÇÕÄ£ ½Ã¾ß°¢
-    public LayerMask obstacleMask;            // º®/ÁöÇü ·¹ÀÌ¾î(°¡¸² Ã¼Å©)
+    [Header("íƒì§€ (ë°œê²¬ ì „ê¹Œì§€ë§Œ ì‚¬ìš©)")]
+    public float detectRadius = 4f;           // ê·¼ì ‘ ê°ì§€(ì²­ê°/ì£¼ë³€)
+    public float viewDistance = 6f;           // ì‹œì•¼ ê±°ë¦¬
+    [Range(0, 180)] public float fovAngle = 80f; // ì¢Œìš° í•©ì¹œ ì‹œì•¼ê°
+    public LayerMask obstacleMask;            // ë²½/ì§€í˜• ë ˆì´ì–´(ê°€ë¦¼ ì²´í¬)
 
-    [Header("ÂüÁ¶")]
-    public Rigidbody2D target;                // PlayerÀÇ Rigidbody2D (ÀÎ½ºÆåÅÍ¿¡ ¿¬°á)
+    [Header("ì°¸ì¡°")]
+    public Rigidbody2D target;                // Playerì˜ Rigidbody2D (ì¸ìŠ¤í™í„°ì— ì—°ê²°)
 
     private bool isLive = true;
-    private bool hasSpotted = false;          // ¡Ú ÇÑ ¹ø ¹ß°ßÇÏ¸é °è¼Ó true
-    private float nextAttackTime = 0f;        // Àı´ë½Ã°£ ±â¹İ Äğ´Ù¿î
-    private bool dealtThisFixed = false;      // ÇÑ °íÁ¤ÇÁ·¹ÀÓ 1È¸ °¡µå
+    private bool hasSpotted = false;          // â˜… í•œ ë²ˆ ë°œê²¬í•˜ë©´ ê³„ì† true
+    private float nextAttackTime = 0f;        // ì ˆëŒ€ì‹œê°„ ê¸°ë°˜ ì¿¨ë‹¤ìš´
+    private bool dealtThisFixed = false;      // í•œ ê³ ì •í”„ë ˆì„ 1íšŒ ê°€ë“œ
 
     private Rigidbody2D rigid;
     private SpriteRenderer spriter;
@@ -45,13 +45,13 @@ public class Mob : MonoBehaviour
             return;
         }
 
-        // ¾ÆÁ÷ ¾È ºÃ´Ù¸é Å½Áö ½Ãµµ
+        // ì•„ì§ ì•ˆ ë´¤ë‹¤ë©´ íƒì§€ ì‹œë„
         if (!hasSpotted && CanDetectPlayer())
         {
-            hasSpotted = true; // ¡Ú ÀÌÁ¦ºÎÅÍ ¿µ±¸ ÃßÀû
+            hasSpotted = true; // â˜… ì´ì œë¶€í„° ì˜êµ¬ ì¶”ì 
         }
 
-        // ºÃ´Ù¸é °è¼Ó ÃßÀû
+        // ë´¤ë‹¤ë©´ ê³„ì† ì¶”ì 
         if (hasSpotted)
         {
             Vector2 dir = target.position - rigid.position;
@@ -59,24 +59,24 @@ public class Mob : MonoBehaviour
             rigid.MovePosition(rigid.position + step);
         }
 
-        // ÃßÀûÇüÀÌ¶ó °ü¼º Á¦°Å
+        // ì¶”ì í˜•ì´ë¼ ê´€ì„± ì œê±°
         rigid.linearVelocity = Vector2.zero;
     }
 
     void LateUpdate()
     {
         if (!isLive || target == null) return;
-        // ÁÂ¿ì ¹æÇâ¸¸ »ç¿ë (¿øÇÏ¸é ÀÌµ¿ º¤ÅÍ·Î ±³Ã¼ °¡´É)
+        // ì¢Œìš° ë°©í–¥ë§Œ ì‚¬ìš© (ì›í•˜ë©´ ì´ë™ ë²¡í„°ë¡œ êµì²´ ê°€ëŠ¥)
         spriter.flipX = target.position.x < rigid.position.x;
     }
 
-    // ºÙÀÚ¸¶ÀÚ 1È¸
+    // ë¶™ìë§ˆì 1íšŒ
     void OnCollisionEnter2D(Collision2D collision)
     {
         TryDealDamage(collision);
     }
 
-    // ÀÌÈÄ Äğ´Ù¿î¸¶´Ù
+    // ì´í›„ ì¿¨ë‹¤ìš´ë§ˆë‹¤
     void OnCollisionStay2D(Collision2D collision)
     {
         TryDealDamage(collision);
@@ -86,7 +86,7 @@ public class Mob : MonoBehaviour
     {
         if (collision.collider.CompareTag("Player"))
         {
-            // ´Ù½Ã ºÙÀ¸¸é Áï½Ã Å¸°İ Çã¿ë
+            // ë‹¤ì‹œ ë¶™ìœ¼ë©´ ì¦‰ì‹œ íƒ€ê²© í—ˆìš©
             nextAttackTime = 0f;
         }
     }
@@ -95,9 +95,9 @@ public class Mob : MonoBehaviour
     {
         if (!isLive) return;
         if (!collision.collider.CompareTag("Player")) return;
-        if (dealtThisFixed) return; // °°Àº Fixed ÇÁ·¹ÀÓ Áßº¹ ¹æÁö
+        if (dealtThisFixed) return; // ê°™ì€ Fixed í”„ë ˆì„ ì¤‘ë³µ ë°©ì§€
 
-        // ¹ß°ß ÀÌÀü¿£ °ø°İÇÏÁö ¾ÊÀ½(ÀáÀÔ À¯Áö)
+        // ë°œê²¬ ì´ì „ì—” ê³µê²©í•˜ì§€ ì•ŠìŒ(ì ì… ìœ ì§€)
         if (!hasSpotted) return;
 
         if (Time.time < nextAttackTime) return;
@@ -112,25 +112,25 @@ public class Mob : MonoBehaviour
         dealtThisFixed = true;
     }
 
-    // === ¹ß°ß ·ÎÁ÷(¹ß°ß Àü±îÁö¸¸ È£Ãâ) ===
+    // === ë°œê²¬ ë¡œì§(ë°œê²¬ ì „ê¹Œì§€ë§Œ í˜¸ì¶œ) ===
     bool CanDetectPlayer()
     {
         Vector2 myPos = rigid.position;
         Vector2 toPlayer = target.position - myPos;
         float dist = toPlayer.magnitude;
 
-        // 1) ±ÙÁ¢ ¹İ°æ: °¡¸²¸¸ ¾È µÇ¸é Áï½Ã ¹ß°ß
+        // 1) ê·¼ì ‘ ë°˜ê²½: ê°€ë¦¼ë§Œ ì•ˆ ë˜ë©´ ì¦‰ì‹œ ë°œê²¬
         if (dist <= detectRadius)
             return !Blocked(myPos, target.position);
 
-        // 2) ½Ã¾ß°¢ + ½Ã¾ß°Å¸®
+        // 2) ì‹œì•¼ê° + ì‹œì•¼ê±°ë¦¬
         if (dist > viewDistance) return false;
 
-        Vector2 forward = spriter.flipX ? Vector2.left : Vector2.right; // °£´ÜÇÑ Á¤¸é
+        Vector2 forward = spriter.flipX ? Vector2.left : Vector2.right; // ê°„ë‹¨í•œ ì •ë©´
         float angle = Vector2.Angle(forward, toPlayer.normalized);
         if (angle > (fovAngle * 0.5f)) return false;
 
-        // 3) ¶óÀÎÄ³½ºÆ®·Î °¡¸² Ã¼Å©
+        // 3) ë¼ì¸ìºìŠ¤íŠ¸ë¡œ ê°€ë¦¼ ì²´í¬
         return !Blocked(myPos, target.position);
     }
 
@@ -140,7 +140,7 @@ public class Mob : MonoBehaviour
         return hit.collider != null;
     }
 
-    // µğ¹ö±×¿ë
+    // ë””ë²„ê·¸ìš©
     void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1, 0.6f, 0, 0.25f);
@@ -149,7 +149,7 @@ public class Mob : MonoBehaviour
         Gizmos.color = new Color(0, 1, 0, 0.25f);
         Gizmos.DrawWireSphere(transform.position, viewDistance);
 
-        // ´ë·«ÀûÀÎ FOV Ç¥½Ã
+        // ëŒ€ëµì ì¸ FOV í‘œì‹œ
         Vector2 forward = (spriter != null && spriter.flipX) ? Vector2.left : Vector2.right;
         float half = fovAngle * 0.5f;
         Vector2 left = Quaternion.Euler(0, 0, +half) * forward;
@@ -159,9 +159,42 @@ public class Mob : MonoBehaviour
         Gizmos.DrawLine(transform.position, (Vector2)transform.position + right * viewDistance);
     }
 
+    private bool hasSpotted = false;
+
+    // âœ… ì¶”ê°€ 1: ë°–ì—ì„œ ì½ê¸° ìœ„í•œ í”„ë¡œí¼í‹°
+    public bool IsAlerted => hasSpotted;
+
+    // âœ… ì¶”ê°€ 2: ì¡°ìš©íˆ ì œê±°(í•œì… ì²˜ë¦¬)ìš© ë©”ì„œë“œ
+    public void KillSilently()
+    {
+        if (!isLive) return;
+        isLive = false;
+        // (ì„ íƒ) ì½œë¼ì´ë”/ë¦¬ì§“ ë„ê¸°
+        var cols = GetComponentsInChildren<Collider2D>(true);
+        foreach (var c in cols) if (c) c.enabled = false;
+        if (rigid) rigid.simulated = false;
+
+        Destroy(gameObject); // í•„ìš”í•˜ë©´ ì• ë‹ˆ/ì‚¬ìš´ë“œ í›„ ì§€ì—° íŒŒê´´ë¡œ ë³€ê²½
+    }
+
+    void Awake()
+    {
+        rigid = GetComponent<Rigidbody2D>();
+        spriter = GetComponent<SpriteRenderer>();
+        isLive = true;
+        hasSpotted = false;
+
+        // âœ… ì¶”ê°€ 3: íƒ€ê¹ƒ ìë™ ì£¼ì…(ì¸ìŠ¤í™í„° ë¹„ì—ˆì„ ë•Œ ëŒ€ë¹„)
+        if (target == null)
+        {
+            var p = GameObject.FindGameObjectWithTag("Player");
+            if (p) { var prb = p.GetComponent<Rigidbody2D>(); if (prb) target = prb; }
+        }
+    }
+
     public void OnDamage(float damage)
     {
-        Debug.Log($"{name}ÀÌ(°¡) {damage} µ¥¹ÌÁö");
-        // TODO: Ã¼·Â/»ç¸Á ½Ã hasSpotted = false; isLive = false; µî »óÅÂ ÀüÈ¯
+        Debug.Log($"{name}ì´(ê°€) {damage} ë°ë¯¸ì§€");
+        // TODO: ì²´ë ¥/ì‚¬ë§ ì‹œ hasSpotted = false; isLive = false; ë“± ìƒíƒœ ì „í™˜
     }
 }
