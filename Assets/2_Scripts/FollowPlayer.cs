@@ -11,7 +11,7 @@ public class FollowPlayer : MonoBehaviour
             // 현재 오브젝트의 위치를 플레이어의 위치로 따라가되, Y축만 +1
             Vector3 targetPosition = new Vector3(
                 playerTransform.position.x,
-                playerTransform.position.y + 0.8f,
+                playerTransform.position.y + 2f,
                 playerTransform.position.z
             );
 
