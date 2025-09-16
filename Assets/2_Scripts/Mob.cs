@@ -3,7 +3,7 @@
 public class Mob : MonoBehaviour
 {
     [Header("이동")]
-    public float Speed = 7.5f;
+    public float Speed = 7f;
 
     [Header("공격")]
     public int minDamage = 3;
@@ -11,21 +11,30 @@ public class Mob : MonoBehaviour
     public float attackCooldown = 1f;
 
     [Header("탐지 (발견 전까지만 사용)")]
-    public float detectRadius = 4f;           // 근접 감지(청각/주변)
-    public float viewDistance = 6f;           // 시야 거리
+    public float detectRadius = 4f;              // 근접 감지(청각/주변)
+    public float viewDistance = 6f;              // 시야 거리
     [Range(0, 180)] public float fovAngle = 80f; // 좌우 합친 시야각
-    public LayerMask obstacleMask;            // 벽/지형 레이어(가림 체크)
+    public LayerMask obstacleMask;               // 벽/지형 레이어(가림 체크)
 
     [Header("참조")]
-    public Rigidbody2D target;                // Player의 Rigidbody2D (인스펙터에 연결)
+    public Rigidbody2D target;                   // Player의 Rigidbody2D (인스펙터에 연결 가능)
+
+    [Header("체력")]
+    public int maxHP = 20;
+    public int currentHP;
 
     private bool isLive = true;
-    private bool hasSpotted = false;          // ★ 한 번 발견하면 계속 true
-    private float nextAttackTime = 0f;        // 절대시간 기반 쿨다운
-    private bool dealtThisFixed = false;      // 한 고정프레임 1회 가드
+    private bool hasSpotted = false;             // ★ 한 번 발견하면 계속 true
+    private float nextAttackTime = 0f;           // 절대시간 기반 쿨다운
+    private bool dealtThisFixed = false;         // 한 고정프레임 1회 가드
+    public bool IsAlive => isLive;
+
 
     private Rigidbody2D rigid;
     private SpriteRenderer spriter;
+
+    // PlayerBite/기타에서 읽기용
+    public bool IsAlerted => hasSpotted;
 
     void Awake()
     {
@@ -33,6 +42,20 @@ public class Mob : MonoBehaviour
         spriter = GetComponent<SpriteRenderer>();
         isLive = true;
         hasSpotted = false;
+
+        // HP 초기화
+        currentHP = Mathf.Max(1, maxHP);
+
+        // 타깃 자동 주입(인스펙터가 비었을 때 대비)
+        if (target == null)
+        {
+            var p = GameObject.FindGameObjectWithTag("Player");
+            if (p)
+            {
+                var prb = p.GetComponent<Rigidbody2D>();
+                if (prb) target = prb;
+            }
+        }
     }
 
     void FixedUpdate()
@@ -66,7 +89,6 @@ public class Mob : MonoBehaviour
     void LateUpdate()
     {
         if (!isLive || target == null) return;
-        // 좌우 방향만 사용 (원하면 이동 벡터로 교체 가능)
         spriter.flipX = target.position.x < rigid.position.x;
     }
 
@@ -126,7 +148,7 @@ public class Mob : MonoBehaviour
         // 2) 시야각 + 시야거리
         if (dist > viewDistance) return false;
 
-        Vector2 forward = spriter.flipX ? Vector2.left : Vector2.right; // 간단한 정면
+        Vector2 forward = spriter && spriter.flipX ? Vector2.left : Vector2.right; // 간단한 정면
         float angle = Vector2.Angle(forward, toPlayer.normalized);
         if (angle > (fovAngle * 0.5f)) return false;
 
@@ -159,42 +181,46 @@ public class Mob : MonoBehaviour
         Gizmos.DrawLine(transform.position, (Vector2)transform.position + right * viewDistance);
     }
 
-    private bool hasSpotted = false;
+    // ==== ▼▼▼ 추가: 총알/기타에서 호출하는 피해/사망 =====
+    public void TakeDamage(int damage)
+    {
+        if (!isLive) return;
+        currentHP -= Mathf.Max(1, damage);
+        // 총에 맞으면 바로 발각
+        hasSpotted = true;
 
-    // ✅ 추가 1: 밖에서 읽기 위한 프로퍼티
-    public bool IsAlerted => hasSpotted;
+        if (currentHP <= 0)
+        {
+            Die();
+        }
+        else
+        {
+            // (선택) 피격 반짝, 넉백 등
+            // StartCoroutine(HitFlash());
+        }
+    }
 
-    // ✅ 추가 2: 조용히 제거(한입 처리)용 메서드
-    public void KillSilently()
+    public void OnDamage(float damage)  // 기존 시그니처 유지(다른 코드가 호출할 수 있으니)
+    {
+        TakeDamage(Mathf.RoundToInt(damage));
+    }
+
+    void Die()
     {
         if (!isLive) return;
         isLive = false;
-        // (선택) 콜라이더/리짓 끄기
+
+        // 충돌/물리 끄고 파괴
         var cols = GetComponentsInChildren<Collider2D>(true);
         foreach (var c in cols) if (c) c.enabled = false;
         if (rigid) rigid.simulated = false;
 
-        Destroy(gameObject); // 필요하면 애니/사운드 후 지연 파괴로 변경
+        Destroy(gameObject); // 몹은 바로 제거
     }
 
-    void Awake()
+    // PlayerBite가 쓰는 ‘조용히 제거’ (연출만 다르게 하고 싶으면 이걸 계속 사용)
+    public void KillSilently()
     {
-        rigid = GetComponent<Rigidbody2D>();
-        spriter = GetComponent<SpriteRenderer>();
-        isLive = true;
-        hasSpotted = false;
-
-        // ✅ 추가 3: 타깃 자동 주입(인스펙터 비었을 때 대비)
-        if (target == null)
-        {
-            var p = GameObject.FindGameObjectWithTag("Player");
-            if (p) { var prb = p.GetComponent<Rigidbody2D>(); if (prb) target = prb; }
-        }
-    }
-
-    public void OnDamage(float damage)
-    {
-        Debug.Log($"{name}이(가) {damage} 데미지");
-        // TODO: 체력/사망 시 hasSpotted = false; isLive = false; 등 상태 전환
+        Die();
     }
 }
