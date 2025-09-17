@@ -20,7 +20,7 @@ public class Mob : MonoBehaviour
     public Rigidbody2D target;                   // Player의 Rigidbody2D (인스펙터에 연결 가능)
 
     [Header("체력")]
-    public int maxHP = 20;
+    public int maxHP = 30;
     public int currentHP;
 
     private bool isLive = true;

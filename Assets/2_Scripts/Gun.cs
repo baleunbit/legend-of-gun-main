@@ -14,12 +14,16 @@ public class Gun : MonoBehaviour
 
     [Header("발사 속도")]
     public float fireRate = 0.2f;
-    private float nextFireTime = 0.2f;
 
+    [Header("데미지/관통")]
+    [SerializeField] float Damage = 5f;   // ← 인스펙터에서 5로 설정
+    [SerializeField] int Pierce = 1;      // 1 = 관통 없음, 2 이상 = 그 수만큼 맞고 진행
+
+    private float nextFireTime = 0.2f;
     private Camera mainCam;
     [SerializeField] private GameObject bulletPrefab;
 
-    private void Start()
+    void Start()
     {
         mainCam = Camera.main;
         Cursor.visible = false;
@@ -27,16 +31,11 @@ public class Gun : MonoBehaviour
         UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
     }
 
-    private void Update()
+    void Update()
     {
-        if (isReloading)
-            return;
+        if (isReloading) return;
 
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            StartCoroutine(Reload());
-            return;
-        }
+        if (Input.GetKeyDown(KeyCode.R)) { StartCoroutine(Reload()); return; }
 
         if (Input.GetMouseButton(0) && Time.time >= nextFireTime)
         {
@@ -53,18 +52,16 @@ public class Gun : MonoBehaviour
         }
     }
 
-    private IEnumerator Reload()
+    IEnumerator Reload()
     {
         isReloading = true;
-        Debug.Log("재장전 중...");
         yield return new WaitForSeconds(reloadTime);
         currentAmmo = maxAmmo;
         UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
         isReloading = false;
-        Debug.Log("재장전 완료!");
     }
 
-    private void Fire()
+    void Fire()
     {
         currentAmmo--;
         UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
@@ -73,14 +70,16 @@ public class Gun : MonoBehaviour
         Vector3 crosshairPos = Crosshair.position;
         Vector2 direction = (crosshairPos - playerPos).normalized;
 
-        // 기본 각도 계산
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        // 앞/뒤 반전 보정 (Y축 기준 프리팹일 때)
         Quaternion bulletRotation = Quaternion.AngleAxis(angle + 270f, Vector3.forward);
 
         GameObject bulletObj = Instantiate(bulletPrefab, playerPos, bulletRotation);
-        bulletObj.GetComponent<Bullet>().Setup(direction);
-        Destroy(bulletObj, 1f);
+        var b = bulletObj.GetComponent<Bullet>();
+
+        // 🔴 핵심: 데미지/관통 값 주입
+        b.Init(Damage, Pierce, direction);
+        b.Setup(direction);
+
+        // Destroy(bulletObj, 1f);  // ← Bullet.Setup에서 이미 수명 처리하므로 중복 제거 권장
     }
 }
