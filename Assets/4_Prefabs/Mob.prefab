@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 2912849908551335570}
   - component: {fileID: 7036603481242194098}
   - component: {fileID: 6934268364885726573}
+  - component: {fileID: 8608671462368305543}
+  - component: {fileID: 6288138401191724438}
   m_Layer: 0
   m_Name: Mob
   m_TagString: Mob
@@ -157,15 +159,15 @@ MonoBehaviour:
   minDamage: 3
   maxDamage: 5
   attackCooldown: 1
-  detectRadius: 4
-  viewDistance: 6
+  detectRadius: 3
+  viewDistance: 3.5
   fovAngle: 40
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
   target: {fileID: 0}
-  maxHP: 20
-  currentHP: 0
+  maxHP: 30
+  currentHP: 30
 --- !u!60 &7036603481242194098
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -242,3 +244,41 @@ MonoBehaviour:
   initialIconRotation: 0
   clampIconInBorder: 1
   clampDistance: 100
+--- !u!114 &8608671462368305543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3592429228821194639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c0eb0af60a3b543ba0c6326152a063, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  circleSegments: 64
+  lineWidth: 0.03
+  alpha: 0.35
+  proximityColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+  fovColor: {r: 1, g: 0.9, b: 0.1, a: 0.35}
+  forwardColor: {r: 1, g: 1, b: 1, a: 0.9}
+--- !u!114 &6288138401191724438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3592429228821194639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d74f2498c561c840a61d629b5ac5216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  points: []
+  pingPong: 1
+  pattern: 0
+  halfSize: {x: 1.5, y: 1}
+  crossRadius: 1.5
+  patrolSpeed: 3
+  arriveDist: 0.05
+  waitAtPoint: 0.5

@@ -86,11 +86,14 @@ public class Mob : MonoBehaviour
         rigid.linearVelocity = Vector2.zero;
     }
 
+    // Mob.cs
     void LateUpdate()
     {
-        if (!isLive || target == null) return;
-        spriter.flipX = target.position.x < rigid.position.x;
+        if (!isLive) return;
+        if (hasSpotted && target != null)  // ✅ 발견 후에만 플레이어 방향으로 뒤집기
+            spriter.flipX = target.position.x < rigid.position.x;
     }
+
 
     // 붙자마자 1회
     void OnCollisionEnter2D(Collision2D collision)
