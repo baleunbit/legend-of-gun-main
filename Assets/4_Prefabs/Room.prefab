@@ -2977,6 +2977,50 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &5947729484897115918
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7806493250197312998}
+  - component: {fileID: 1860491639235602386}
+  m_Layer: 6
+  m_Name: SpawnPoint (10)
+  m_TagString: Untagged
+  m_Icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7806493250197312998
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5947729484897115918}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 7.3, y: 5.81, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8594571928476235524}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1860491639235602386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5947729484897115918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85fd48604732a4c4e87ce85d79327b22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5978889654754078029
 GameObject:
   m_ObjectHideFlags: 0
@@ -3127,6 +3171,8 @@ MonoBehaviour:
   activateDelay: 1
   reenterCooldown: 0.4
   exitOffset: {x: 0, y: 0.75}
+  requireClearRoom: 1
+  blockedMessage: "\uC544\uC9C1 \uC801\uC774 \uB0A8\uC544 \uC788\uC5B4!"
 --- !u!61 &4033399122424349937
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3188,7 +3234,7 @@ GameObject:
   - component: {fileID: 4938102122122222929}
   - component: {fileID: 4275164247254675659}
   m_Layer: 6
-  m_Name: Room 1
+  m_Name: Room
   m_TagString: Room
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3246,6 +3292,7 @@ Transform:
   - {fileID: 1248500672286602521}
   - {fileID: 6875880277045710419}
   - {fileID: 7178530297401893440}
+  - {fileID: 7806493250197312998}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6237349099164100463
@@ -3427,6 +3474,8 @@ MonoBehaviour:
   activateDelay: 1
   reenterCooldown: 0.4
   exitOffset: {x: 0, y: 0.75}
+  requireClearRoom: 1
+  blockedMessage: "\uC544\uC9C1 \uC801\uC774 \uB0A8\uC544 \uC788\uC5B4!"
 --- !u!1 &6453563153758908544
 GameObject:
   m_ObjectHideFlags: 0
@@ -4901,6 +4950,8 @@ MonoBehaviour:
   activateDelay: 1
   reenterCooldown: 0.4
   exitOffset: {x: 0, y: 0.75}
+  requireClearRoom: 1
+  blockedMessage: "\uC544\uC9C1 \uC801\uC774 \uB0A8\uC544 \uC788\uC5B4!"
 --- !u!61 &4825334674769225907
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -4935,7 +4986,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.009220004, y: 0.29751456}
+  m_Offset: {x: -0.009220004, y: 0.45991838}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -4945,5 +4996,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 3.2808578, y: 4.318019}
+  m_Size: {x: 3.2808578, y: 3.993211}
   m_EdgeRadius: 0

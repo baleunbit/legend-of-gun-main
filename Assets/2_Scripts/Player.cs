@@ -1,24 +1,29 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
-    [Header("이동 설정")]
+    [Header("이동")]
     public float moveSpeed = 10f;
-    private Vector2 input;
 
+    [Header("체력")]
+    public int maxHealth = 100;
+    public int health = 100;
+
+    [Header("UI")]
+    public Image healthBarImage;  // Filled Image
+
+    // 외부에서 읽기/구독용
+    public bool IsDead => isDead;
+    public event Action Died;
+
+    Vector2 input;
     SpriteRenderer spriter;
     Animator ani;
     Rigidbody2D rb;
-
-    [Header("체력 설정")]
-    public int maxHealth = 100;
-    public int health = 100;
-    private float mobDamageTimer = 0f;
-    private bool isDead = false;    // 🔸 죽음 상태 플래그
-
-    [Header("UI")]
-    public Image healthBarImage; // 체력바 Image (FillAmount로 제어)
+    bool isDead = false;
+    float mobDamageTimer = 0f;
 
     void Start()
     {
@@ -26,38 +31,33 @@ public class Player : MonoBehaviour
         spriter = GetComponent<SpriteRenderer>();
         ani = GetComponent<Animator>();
 
-        health = maxHealth;
+        health = Mathf.Clamp(health, 0, maxHealth);
         UpdateHealthBar();
     }
 
     void Update()
     {
-        if (isDead) return; // 🔸 죽으면 이동 입력 무시
-
-        // 이동 입력
+        if (isDead) return;
         input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
     }
 
     void FixedUpdate()
     {
-        if (isDead) { rb.linearVelocity = Vector2.zero; return; } // 🔸 이동 멈춤
+        if (isDead) { rb.linearVelocity = Vector2.zero; return; }
         rb.linearVelocity = input * moveSpeed;
     }
 
-    private void LateUpdate()
+    void LateUpdate()
     {
-        ani.SetFloat("Speed", rb.linearVelocity.magnitude);
-        if (input.x > 0)
-            spriter.flipX = false;
-        else if (input.x < 0)
-            spriter.flipX = true;
+        ani?.SetFloat("Speed", rb.linearVelocity.magnitude);
+        if (input.x > 0) spriter.flipX = false;
+        else if (input.x < 0) spriter.flipX = true;
     }
 
-    private void OnCollisionStay2D(Collision2D collision)
+    void OnCollisionStay2D(Collision2D collision)
     {
         if (isDead) return;
-
-        if (collision.gameObject.CompareTag("Mob"))
+        if (collision.collider.CompareTag("Mob"))
         {
             mobDamageTimer += Time.fixedDeltaTime;
             if (mobDamageTimer >= 1f)
@@ -67,43 +67,31 @@ public class Player : MonoBehaviour
             }
         }
     }
-
-    private void OnCollisionExit2D(Collision2D collision)
+    void OnCollisionExit2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Mob"))
-        {
-            mobDamageTimer = 0f;
-        }
+        if (collision.collider.CompareTag("Mob")) mobDamageTimer = 0f;
     }
 
     public void TakeDamage(int damage)
     {
         if (isDead) return;
-
-        health -= damage;
-        health = Mathf.Clamp(health, 0, maxHealth);
-        Debug.Log($"플레이어가 데미지 {damage} 받음! 현재 체력: {health}");
+        health = Mathf.Clamp(health - Mathf.Max(0, damage), 0, maxHealth);
         UpdateHealthBar();
-
-        if (health <= 0)
-            Die(); // 🔸 체력 0 → 죽음 처리
+        if (health <= 0) Die();
     }
 
     void UpdateHealthBar()
     {
-        if (healthBarImage != null)
-            healthBarImage.fillAmount = (float)health / maxHealth;
+        if (healthBarImage) healthBarImage.fillAmount = (float)health / maxHealth;
     }
 
     void Die()
     {
-        if (isDead) return; // 중복 실행 방지
+        if (isDead) return;
         isDead = true;
-
-        rb.linearVelocity = Vector2.zero; // 이동 정지
-        ani.SetTrigger("Dead");           // 🔸 Animator에서 트리거 발동
-
-        Debug.Log("플레이어 사망!");
-        // 여기서 GameOver UI 호출, 재시작 로직 등 추가 가능
+        rb.linearVelocity = Vector2.zero;
+        ani?.SetTrigger("Dead");
+        Died?.Invoke();                 // 총 등에게 알림
+        Debug.Log("플레이어 사망");
     }
 }

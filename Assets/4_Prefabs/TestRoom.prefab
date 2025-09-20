@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 6048399483130150997}
   - component: {fileID: 9063645516298914646}
   m_Layer: 0
-  m_Name: TestRoom 1
+  m_Name: TestRoom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 4452809307749952697}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 53, y: -1.6, z: 0}
+  m_LocalPosition: {x: 66.3, y: -5.1, z: 0}
   m_LocalScale: {x: 9.367445, y: 5.854888, z: 5.8619223}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -170,7 +170,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.09767282, y: 0.08995485}
+  m_Offset: {x: 0.035208702, y: 0.027493}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -180,5 +180,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 6.682764, y: 7.6960506}
+  m_Size: {x: 6.5578356, y: 7.571127}
   m_EdgeRadius: 0

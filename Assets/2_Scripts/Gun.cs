@@ -7,35 +7,46 @@ public class Gun : MonoBehaviour
     public Transform Crosshair;
 
     [Header("탄창")]
-    public int maxAmmo = 20;
+    public int maxAmmo = 6;
     public float reloadTime = 2f;
-    private int currentAmmo;
-    private bool isReloading = false;
 
-    [Header("발사 속도")]
+    [Header("연사 속도")]
     public float fireRate = 0.2f;
 
     [Header("데미지/관통")]
-    [SerializeField] float Damage = 5f;   // ← 인스펙터에서 5로 설정
-    [SerializeField] int Pierce = 1;      // 1 = 관통 없음, 2 이상 = 그 수만큼 맞고 진행
+    [SerializeField] float Damage = 5f;
+    [SerializeField] int Pierce = 1;  // 1=관통없음
 
-    private float nextFireTime = 0.2f;
-    private Camera mainCam;
-    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] GameObject bulletPrefab;
+
+    int currentAmmo;
+    bool isReloading;
+    float nextFireTime;
+    Player player;
 
     void Start()
     {
-        mainCam = Camera.main;
-        Cursor.visible = false;
+        var pObj = GameObject.FindGameObjectWithTag("Player");
+        if (pObj) player = pObj.GetComponent<Player>();
+
         currentAmmo = maxAmmo;
+        nextFireTime = 0f;
+
         UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
     }
 
     void Update()
     {
+        // ✅ Player.cs 수정 없이 health로만 체크
+        if (!player || player.health <= 0) return;
+
         if (isReloading) return;
 
-        if (Input.GetKeyDown(KeyCode.R)) { StartCoroutine(Reload()); return; }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            StartCoroutine(Reload());
+            return;
+        }
 
         if (Input.GetMouseButton(0) && Time.time >= nextFireTime)
         {
@@ -46,7 +57,6 @@ public class Gun : MonoBehaviour
             }
             else
             {
-                Debug.Log("탄약 부족! 재장전 필요 (R 키)");
                 StartCoroutine(Reload());
             }
         }
@@ -57,29 +67,45 @@ public class Gun : MonoBehaviour
         isReloading = true;
         yield return new WaitForSeconds(reloadTime);
         currentAmmo = maxAmmo;
-        UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
         isReloading = false;
     }
 
     void Fire()
     {
         currentAmmo--;
-        UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
 
-        Vector3 playerPos = transform.position;
-        Vector3 crosshairPos = Crosshair.position;
-        Vector2 direction = (crosshairPos - playerPos).normalized;
+        Vector3 origin = transform.position;
+        Vector3 aim = Crosshair ? Crosshair.position : origin + transform.right;
+        Vector2 dir = (aim - origin).normalized;
 
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        Quaternion bulletRotation = Quaternion.AngleAxis(angle + 270f, Vector3.forward);
+        float spawnOffset = GetPlayerRadius() + 0.1f;
+        Vector3 spawnPos = origin + (Vector3)dir * spawnOffset;
 
-        GameObject bulletObj = Instantiate(bulletPrefab, playerPos, bulletRotation);
-        var b = bulletObj.GetComponent<Bullet>();
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        Quaternion rot = Quaternion.AngleAxis(angle + 270f, Vector3.forward);
 
-        // 🔴 핵심: 데미지/관통 값 주입
-        b.Init(Damage, Pierce, direction);
-        b.Setup(direction);
+        var go = Instantiate(bulletPrefab, spawnPos, rot);
+        var b = go.GetComponent<Bullet>();
+        b.Init(Damage, Pierce, dir);
+        b.Setup(dir);
 
-        // Destroy(bulletObj, 1f);  // ← Bullet.Setup에서 이미 수명 처리하므로 중복 제거 권장
+        // 플레이어와 충돌 무시
+        var bulletCol = go.GetComponent<Collider2D>();
+        var ownerCols = player.GetComponentsInChildren<Collider2D>(true);
+        foreach (var c in ownerCols)
+            if (c && bulletCol) Physics2D.IgnoreCollision(bulletCol, c, true);
+    }
+
+    float GetPlayerRadius()
+    {
+        float r = 0.3f;
+        var cols = player.GetComponentsInChildren<Collider2D>(true);
+        foreach (var c in cols)
+        {
+            if (!c) continue;
+            var b = c.bounds;
+            r = Mathf.Max(r, Mathf.Max(b.extents.x, b.extents.y));
+        }
+        return r;
     }
 }
