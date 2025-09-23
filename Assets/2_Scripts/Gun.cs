@@ -68,11 +68,14 @@ public class Gun : MonoBehaviour
         yield return new WaitForSeconds(reloadTime);
         currentAmmo = maxAmmo;
         isReloading = false;
+        UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
     }
 
     void Fire()
     {
         currentAmmo--;
+
+        UIManager.Instance?.UpdateAmmoText(currentAmmo, maxAmmo);
 
         Vector3 origin = transform.position;
         Vector3 aim = Crosshair ? Crosshair.position : origin + transform.right;
