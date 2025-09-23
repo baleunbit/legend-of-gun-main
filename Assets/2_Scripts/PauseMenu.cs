@@ -1,13 +1,15 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
 {
-    [Header("ÀÏ½ÃÁ¤Áö ÆĞ³Î(ºñÈ°¼ºÀ¸·Î ½ÃÀÛ)")]
+    [Header("ì¼ì‹œì •ì§€ íŒ¨ë„(ë¹„í™œì„±ìœ¼ë¡œ ì‹œì‘)")]
     [SerializeField] GameObject menuRoot;
 
-    [Header("¿É¼Ç")]
+    [Header("ì˜µì…˜")]
     [SerializeField] bool showCursorOnPause = true;
+
+    [SerializeField] private string menuSceneName = "1_Menu";
 
     bool paused;
 
@@ -43,8 +45,7 @@ public class PauseMenu : MonoBehaviour
         Time.timeScale = 1f;
         AudioListener.pause = false;
         if (menuRoot) menuRoot.SetActive(false);
-        // ÇÊ¿äÇÏ¸é Ä¿¼­ ¼û±è:
-        // Cursor.visible = false;
+        // Cursor.visible = false; // í•„ìš”ì‹œ
     }
 
     public void Restart()
@@ -55,10 +56,24 @@ public class PauseMenu : MonoBehaviour
         SceneManager.LoadScene(cur.buildIndex);
     }
 
-    public void BackToMenu(string menuSceneName = "1_Menu")
+    // âœ… ë§¤ê°œë³€ìˆ˜ ì œê±°: í•„ë“œê°’ ì‚¬ìš©
+    public void BackToMenu()
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
+
+        if (string.IsNullOrEmpty(menuSceneName))
+        {
+            Debug.LogError("[PauseMenu] menuSceneNameì´ ë¹„ì–´ ìˆìŠµë‹ˆë‹¤.");
+            return;
+        }
+
+        if (!Application.CanStreamedLevelBeLoaded(menuSceneName))
+        {
+            Debug.LogError($"[PauseMenu] '{menuSceneName}' ì”¬ì´ Build Settingsì— ì—†ê±°ë‚˜ ì´ë¦„ì´ í‹€ë ¸ìŠµë‹ˆë‹¤.");
+            return;
+        }
+
         SceneManager.LoadScene(menuSceneName);
     }
 
