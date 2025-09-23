@@ -24,6 +24,9 @@ public class Gun : MonoBehaviour
     float nextFireTime;
     Player player;
 
+    // ✅ 사망 처리 1회 호출 보장용
+    bool deathHandled = false;
+
     void Start()
     {
         var pObj = GameObject.FindGameObjectWithTag("Player");
@@ -32,13 +35,32 @@ public class Gun : MonoBehaviour
         currentAmmo = maxAmmo;
         nextFireTime = 0f;
 
-        UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
+        // UI 매니저가 아직 초기화 전일 수 있으니 널가드
+        UIManager.Instance?.UpdateAmmoText(currentAmmo, maxAmmo);
     }
 
     void Update()
     {
         // ✅ Player.cs 수정 없이 health로만 체크
-        if (!player || player.health <= 0) return;
+        if (!player)
+            return;
+
+        // ✅ 체력 0 이하가 되는 '순간'에만 한 번 처리
+        if (player.health <= 0)
+        {
+            if (!deathHandled)
+            {
+                deathHandled = true;
+
+                // 사망 패널 표시 + 일시정지
+                UIManager.Instance?.ShowDiedPanel();
+
+                // 입력/사운드 등은 UI 쪽에서 멈추므로 여기선 추가로 할 것 없음
+                // 필요하면 총 자체를 비활성화해서 발사 로직이 더는 돌지 않게 할 수도 있음:
+                // enabled = false;
+            }
+            return;
+        }
 
         if (isReloading) return;
 
@@ -65,10 +87,10 @@ public class Gun : MonoBehaviour
     IEnumerator Reload()
     {
         isReloading = true;
-        yield return new WaitForSeconds(reloadTime);
+        yield return new WaitForSeconds(reloadTime); // 사망 시 UI에서 Time.timeScale=0이 되면, 리로드는 자연스럽게 멈춥니다.
         currentAmmo = maxAmmo;
         isReloading = false;
-        UIManager.Instance.UpdateAmmoText(currentAmmo, maxAmmo);
+        UIManager.Instance?.UpdateAmmoText(currentAmmo, maxAmmo);
     }
 
     void Fire()
