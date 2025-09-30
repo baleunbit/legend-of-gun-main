@@ -11,12 +11,17 @@ public class MobPatrolAuto2D : MonoBehaviour
     public float crossRadius = 1.5f;
 
     [Header("이동/대기")]
-    public float patrolSpeed = 3f;
+    public float patrolSpeed = 3f;       // 순찰 속도
     public float arriveDist = 0.05f;
     public float waitAtPoint = 0.4f;
     public bool pingPong = true;
 
+    [Header("의심 접근(발각 전)")]
+    public bool approachOnProximity = true; // 외부 감지에서 한 스텝 다가갈지
+    public float suspicionSpeed = 2.0f;     // 🔸 의심 속도(발각 전) — 여기만 조절하면 됨
+
     Rigidbody2D rb;
+    SpriteRenderer sr;
     Mob mob;
     Vector2[] waypoints;
     int idx = 0, dir = +1;
@@ -25,11 +30,11 @@ public class MobPatrolAuto2D : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        mob = GetComponent<Mob>(); // 있을 수도, 없을 수도
+        sr = GetComponentInChildren<SpriteRenderer>(true);
+        mob = GetComponent<Mob>();
 
         BuildAutoPath();
 
-        // 살짝 디싱크
         if (waypoints != null && waypoints.Length > 1)
         {
             idx = Random.Range(0, waypoints.Length);
@@ -44,7 +49,8 @@ public class MobPatrolAuto2D : MonoBehaviour
         Vector2 c = transform.position;
         if (pattern == AutoPattern.Rectangle)
         {
-            waypoints = new Vector2[] {
+            waypoints = new Vector2[]
+            {
                 c + new Vector2(-halfSize.x,  0f),
                 c + new Vector2( 0f,          +halfSize.y),
                 c + new Vector2(+halfSize.x,  0f),
@@ -53,7 +59,8 @@ public class MobPatrolAuto2D : MonoBehaviour
         }
         else
         {
-            waypoints = new Vector2[] {
+            waypoints = new Vector2[]
+            {
                 c + Vector2.left  * crossRadius,
                 c + Vector2.up    * crossRadius,
                 c + Vector2.right * crossRadius,
@@ -64,21 +71,36 @@ public class MobPatrolAuto2D : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 발각되면 순찰 중단(추격은 Mob이 함)
-        if (mob != null && mob.IsAlerted) { rb.linearVelocity = Vector2.zero; return; }
-
-        // 360° 근접(소리) 반응: 플레이어 쪽으로 "한 스텝"만
-        if (mob != null && mob.IsPlayerInHearingRange())
+        // ✅ 발각되면 순찰 중지 (추격은 Mob에서 Speed로)
+        if (mob != null && mob.IsAlerted)
         {
-            Vector2 dirToPlayer = (mob.target.position - rb.position);
-            Vector2 step = dirToPlayer.normalized * patrolSpeed * Time.fixedDeltaTime;
-            rb.MovePosition(rb.position + step);
             rb.linearVelocity = Vector2.zero;
-            mob.SetLook(dirToPlayer); // 시선 = 움직임 방향(8방향 스냅)
             return;
         }
 
-        // ---- 기본 순찰 ----
+        // ✅ 발각 전 + 외부 감지 범위 → "의심 속도"로 한 스텝만 접근
+        if (approachOnProximity && mob != null && mob.target != null)
+        {
+            float dist = Vector2.Distance(rb.position, mob.target.position);
+            if (dist <= mob.detectRadius)
+            {
+                Vector2 dirToPlayer = (mob.target.position - rb.position);
+                if (dirToPlayer.sqrMagnitude > 0.0001f)
+                {
+                    // 🔸 여기서 suspicionSpeed 사용! (절대 Speed 사용 금지)
+                    Vector2 step = dirToPlayer.normalized * suspicionSpeed * Time.fixedDeltaTime;
+                    rb.MovePosition(rb.position + step);
+                    rb.linearVelocity = Vector2.zero;
+
+                    if (sr && Mathf.Abs(step.x) > 0.001f)
+                        sr.flipX = step.x < 0f;
+
+                    return; // 이번 프레임은 순찰 스킵
+                }
+            }
+        }
+
+        // 기본 순찰
         if (waypoints == null || waypoints.Length == 0) return;
 
         if (waitTimer > 0f)
@@ -91,9 +113,9 @@ public class MobPatrolAuto2D : MonoBehaviour
         Vector2 cur = rb.position;
         Vector2 target = waypoints[Mathf.Clamp(idx, 0, waypoints.Length - 1)];
         Vector2 to = target - cur;
-        float dist = to.magnitude;
+        float distToWp = to.magnitude;
 
-        if (dist <= arriveDist)
+        if (distToWp <= arriveDist)
         {
             AdvanceIndex();
             waitTimer = waitAtPoint;
@@ -101,27 +123,14 @@ public class MobPatrolAuto2D : MonoBehaviour
         }
         else
         {
-            Vector2 step = to.normalized * patrolSpeed * Time.fixedDeltaTime;
+            Vector2 step = to.normalized * patrolSpeed * Time.fixedDeltaTime; // 순찰 속도
             rb.MovePosition(cur + step);
             rb.linearVelocity = Vector2.zero;
-            if (mob) mob.SetLook(to); // 시선 = 이동 방향(8방향 스냅)
+
+            if (sr && Mathf.Abs(step.x) > 0.001f)
+                sr.flipX = step.x < 0f;
         }
     }
-
-    public void KillSilently()
-    {
-        if (!isLive) return;   // 이미 죽었으면 무시
-        isLive = false;
-
-        // 몹의 충돌/물리 비활성화
-        var cols = GetComponentsInChildren<Collider2D>(true);
-        foreach (var c in cols) if (c) c.enabled = false;
-        if (rb) rb.simulated = false;
-
-        // 바로 제거
-        Destroy(gameObject);
-    }
-
 
     void AdvanceIndex()
     {

@@ -12,36 +12,36 @@ public class Mob : MonoBehaviour
     public float attackCooldown = 1f;
 
     [Header("탐지(발견 전까지)")]
-    public float detectRadius = 4f;                 // 근접(소리) 반경
-    public float viewDistance = 6f;                 // 시야 거리
+    public float detectRadius = 4f;                  // ✅ 근접(소리) 반경: 의심만, 발각 NO
+    public float viewDistance = 6f;                  // 시야 거리
     [Range(0, 180)] public float fovAngle = 80f;     // 시야각
-    public LayerMask obstacleMask;                  // 가림 체크용(시야)
+    public LayerMask obstacleMask;                   // 가림 체크용(시야)
 
-    [Header("발각 규칙")]
-    public float proximityAlertTime = 5f;           // ⏱ 근접 반경 안에 연속으로 머물러야 하는 시간(초)
+    [Header("발각 규칙 (사용 안 함)")]
+    public float proximityAlertTime = 5f;            // (과거 로직: 근접 유지로 발각) — 지금은 미사용
 
     [Header("참조")]
-    public Rigidbody2D target;                      // Player Rigidbody2D (스포너/인스펙터 주입)
+    public Rigidbody2D target;                       // Player Rigidbody2D
 
     [Header("표식(선택)")]
-    public GameObject questionMark;                 // 머리 위 ? (근접 탐지 중)
-    public GameObject exclamationMark;              // 머리 위 ! (발각)
+    public GameObject questionMark;                  // 머리 위 ? (근접 의심)
+    public GameObject exclamationMark;               // 머리 위 ! (발각)
 
     [Header("체력")]
     public int maxHP = 30;
 
-    // 외부에서 읽는 플래그
+    // 외부에서 읽기
     public bool IsAlerted => hasSpotted;
     public bool IsAlive => isLive;
 
     // 내부 상태
     int currentHP;
     bool isLive = true;
-    bool hasSpotted = false;            // 한 번 true면 계속 추격
+    bool hasSpotted = false;         // true 되면 계속 추격
     float nextAttackTime = 0f;
     bool dealtThisFixed = false;
 
-    // 근접 유지 타이머
+    // (과거) 근접 유지 타이머 — 현재는 발각에 사용하지 않음
     float proximityTimer = 0f;
 
     Rigidbody2D rb;
@@ -74,18 +74,18 @@ public class Mob : MonoBehaviour
             return;
         }
 
-        // 1) 아직 발각 전이라면: 근접 유지 감시 + 시야 감시
+        // 1) 발각 전: 근접 의심 표시만, 시야에 걸리면 발각
         if (!hasSpotted)
         {
-            HandleProximitySuspicion();     // ⏱ 근접 반경 지속 체크 (5초 지나면 발각)
+            HandleProximitySuspicion();     // ❗ 의심만 — 발각하지 않음
 
-            if (!hasSpotted && CanDetectPlayer())   // 시야로 바로 발각될 수도 있음
+            if (!hasSpotted && CanDetectPlayer())
             {
-                SetAlerted();
+                SetAlerted(); // ! + 추격 시작 (Speed 사용은 Mob이 담당)
             }
         }
 
-        // 2) 발각 후에는 추격
+        // 2) 발각 후: 추격
         if (hasSpotted)
         {
             Vector2 dir = (target.position - rb.position).normalized;
@@ -99,32 +99,23 @@ public class Mob : MonoBehaviour
     void LateUpdate()
     {
         if (!isLive || !target) return;
-        // (추격 중 시선은 FixedUpdate에서 처리)
     }
 
     // ───────────────────────────────────
-    // 근접 유지 감시
+    // 근접 유지 감시 (이제는 의심만, 발각 NO)
     void HandleProximitySuspicion()
     {
-        bool inRange = Vector2.SqrMagnitude(target.position - rb.position) <= detectRadius * detectRadius;
+    bool inRange = Vector2.SqrMagnitude(target.position - rb.position) <= detectRadius * detectRadius;
 
-        if (inRange)
-        {
-            // 근접 중에는 ? 표시
-            ShowQuestion(true);
-            proximityTimer += Time.fixedDeltaTime;
-
-            if (proximityTimer >= proximityAlertTime)
-            {
-                SetAlerted(); // !로 변경 + 추격 시작
-            }
-        }
-        else
-        {
-            // 범위를 벗어나면 초기화
-            proximityTimer = 0f;
-            ShowQuestion(false);
-        }
+    if (inRange)
+    {
+        ShowQuestion(true); // ? 만 켜기
+        // 절대 SetAlerted() 부르지 않음
+    }
+    else
+    {
+        ShowQuestion(false);
+    }
     }
 
     void SetAlerted()
@@ -148,7 +139,7 @@ public class Mob : MonoBehaviour
     {
         if (!isLive) return;
         if (!c.collider.CompareTag("Player")) return;
-        if (!hasSpotted) return;                 // 발각 전에는 공격하지 않음
+        if (!hasSpotted) return;                 // 발각 전 공격 금지
         if (dealtThisFixed) return;
         if (Time.time < nextAttackTime) return;
 
@@ -176,6 +167,7 @@ public class Mob : MonoBehaviour
         float angle = Vector2.Angle(forward, to.normalized);
         if (angle > (fovAngle * 0.5f)) return false;
 
+        // 가림 체크
         return !Blocked(myPos, target.position);
     }
 
@@ -190,10 +182,25 @@ public class Mob : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (!isLive) return;
+
         currentHP -= Mathf.Max(1, damage);
-        SetAlerted(); // 총 맞으면 즉시 발각
+
+        // 총/공격을 맞으면 즉시 발각 (스텔스 실패)
+        SetAlerted();
 
         if (currentHP <= 0) Die();
+    }
+
+    public void KillSilently()
+    {
+        if (!isLive) return;
+        isLive = false;
+
+        var cols = GetComponentsInChildren<Collider2D>(true);
+        foreach (var c in cols) if (c) c.enabled = false;
+        if (rb) rb.simulated = false;
+
+        Destroy(gameObject);
     }
 
     public void OnDamage(float damage) => TakeDamage(Mathf.RoundToInt(damage));

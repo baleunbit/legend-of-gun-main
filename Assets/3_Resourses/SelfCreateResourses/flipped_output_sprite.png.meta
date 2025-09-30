@@ -1,22 +1,22 @@
 fileFormatVersion: 2
-guid: 5021a1ef7de67f349928694c5df884a7
+guid: 3eaef3444d2c22f4b8b156d1a6823324
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5263435380630209463
-    second: 1000004740-ezgif.com-gif-to-sprite-converter_0
+      213: -39573355309517892
+    second: flipped_output_sprite_0
   - first:
-      213: -932484275746273381
-    second: 1000004740-ezgif.com-gif-to-sprite-converter_1
+      213: -8486481771347038004
+    second: flipped_output_sprite_1
   - first:
-      213: 849318186502579130
-    second: 1000004740-ezgif.com-gif-to-sprite-converter_2
+      213: -8763866697713582442
+    second: flipped_output_sprite_2
   - first:
-      213: -5874707638299183318
-    second: 1000004740-ezgif.com-gif-to-sprite-converter_3
+      213: -5096966315767831068
+    second: flipped_output_sprite_3
   - first:
-      213: -796541826056944115
-    second: 1000004740-ezgif.com-gif-to-sprite-converter_4
+      213: -7196004252289997280
+    second: flipped_output_sprite_4
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -125,13 +125,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: 1000004740-ezgif.com-gif-to-sprite-converter_0
+      name: flipped_output_sprite_0
       rect:
         serializedVersion: 2
-        x: 39
-        y: 55
-        width: 186
-        height: 178
+        x: 1035
+        y: 43
+        width: 163
+        height: 150
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -140,20 +140,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7b3cfa0879a7b0940800000000000000
-      internalID: 5263435380630209463
+      spriteID: cb3b4363e38637ff0800000000000000
+      internalID: -39573355309517892
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: 1000004740-ezgif.com-gif-to-sprite-converter_1
+      name: flipped_output_sprite_1
       rect:
         serializedVersion: 2
-        x: 295
-        y: 55
-        width: 186
-        height: 178
+        x: 1253
+        y: 43
+        width: 150
+        height: 150
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -162,20 +162,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b978181ed762f03f0800000000000000
-      internalID: -932484275746273381
+      spriteID: cc03802dac5f93a80800000000000000
+      internalID: -8486481771347038004
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: 1000004740-ezgif.com-gif-to-sprite-converter_2
+      name: flipped_output_sprite_2
       rect:
         serializedVersion: 2
-        x: 551
-        y: 55
-        width: 186
-        height: 178
+        x: 1458
+        y: 43
+        width: 150
+        height: 143
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -184,20 +184,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ab3e3c7046269cb00800000000000000
-      internalID: 849318186502579130
+      spriteID: 69ef7efdbad706680800000000000000
+      internalID: -8763866697713582442
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: 1000004740-ezgif.com-gif-to-sprite-converter_3
+      name: flipped_output_sprite_3
       rect:
         serializedVersion: 2
-        x: 807
-        y: 55
-        width: 186
-        height: 186
+        x: 1663
+        y: 43
+        width: 150
+        height: 143
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -206,20 +206,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a2737eb4788d87ea0800000000000000
-      internalID: -5874707638299183318
+      spriteID: 4e5e6840420f349b0800000000000000
+      internalID: -5096966315767831068
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: 1000004740-ezgif.com-gif-to-sprite-converter_4
+      name: flipped_output_sprite_4
       rect:
         serializedVersion: 2
-        x: 1063
-        y: 55
-        width: 202
-        height: 186
+        x: 1867
+        y: 43
+        width: 150
+        height: 143
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -228,8 +228,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d068221fd6d12f4f0800000000000000
-      internalID: -796541826056944115
+      spriteID: 026ed043248a22c90800000000000000
+      internalID: -7196004252289997280
       vertices: []
       indices: 
       edges: []
@@ -247,12 +247,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      1000004740-ezgif.com-gif-to-sprite-converter_0: 5263435380630209463
-      1000004740-ezgif.com-gif-to-sprite-converter_1: -932484275746273381
-      1000004740-ezgif.com-gif-to-sprite-converter_2: 849318186502579130
-      1000004740-ezgif.com-gif-to-sprite-converter_3: -5874707638299183318
-      1000004740-ezgif.com-gif-to-sprite-converter_4: -796541826056944115
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

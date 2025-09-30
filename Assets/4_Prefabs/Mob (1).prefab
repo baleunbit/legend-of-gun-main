@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 6251903308992316047}
   - component: {fileID: 6582116633950717532}
   - component: {fileID: 3718228821749315183}
-  - component: {fileID: 5313462114423515817}
   - component: {fileID: 6681892089006998341}
   - component: {fileID: 5256083310439645369}
   m_Layer: 0
@@ -155,19 +154,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81900e89e79e0b143a26e2512d2c0d53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 9
+  Speed: 7
   minDamage: 3
   maxDamage: 5
   attackCooldown: 1
-  detectRadius: 3
+  detectRadius: 5
   viewDistance: 3.5
-  fovAngle: 40
+  fovAngle: 80
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  proximityAlertTime: 5
   target: {fileID: 0}
+  questionMark: {fileID: 0}
+  exclamationMark: {fileID: 0}
   maxHP: 30
-  currentHP: 30
 --- !u!60 &3718228821749315183
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -225,25 +226,6 @@ PolygonCollider2D:
       - {x: 0.5007587, y: 0.87107754}
       - {x: 0.37429157, y: 1}
   m_UseDelaunayMesh: 0
---- !u!114 &5313462114423515817
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3221993487802830806}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dbf9db670c1df4bb2843b82560ce5409, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  icon: {fileID: 21300000, guid: 5b47ca1209db34047b14f65d2db913e4, type: 3}
-  size: {x: 20, y: 20}
-  rotateWithObject: 0
-  upAxis: {x: 0, y: 1, z: 0}
-  initialIconRotation: 0
-  clampIconInBorder: 1
-  clampDistance: 100
 --- !u!114 &6681892089006998341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -256,12 +238,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22c0eb0af60a3b543ba0c6326152a063, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  circleSegments: 64
+  segments: 64
   lineWidth: 0.03
   alpha: 0.35
-  proximityColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+  ringColor: {r: 0.2, g: 0.7, b: 1, a: 0.6}
   fovColor: {r: 1, g: 0.9, b: 0.1, a: 0.35}
-  forwardColor: {r: 1, g: 1, b: 1, a: 0.9}
 --- !u!114 &5256083310439645369
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -274,11 +255,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d74f2498c561c840a61d629b5ac5216, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  points: []
-  pingPong: 1
   pattern: 0
   halfSize: {x: 1.5, y: 1}
   crossRadius: 1.5
   patrolSpeed: 3
   arriveDist: 0.05
   waitAtPoint: 0.5
+  pingPong: 1

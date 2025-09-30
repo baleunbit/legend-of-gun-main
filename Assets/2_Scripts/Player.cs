@@ -47,12 +47,16 @@ public class Player : MonoBehaviour
         rb.linearVelocity = input * moveSpeed;
     }
 
-    void LateUpdate()
+    private void LateUpdate()
     {
-        ani?.SetFloat("Speed", rb.linearVelocity.magnitude);
+        // before: ani.SetFloat("Speed", rb.linearVelocity.magnitude);
+        // 입력 기반: 내가 안 움직이면(입력 0) 항상 Idle
+        ani.SetFloat("Speed", input.sqrMagnitude);
+
         if (input.x > 0) spriter.flipX = false;
         else if (input.x < 0) spriter.flipX = true;
     }
+
 
     void OnCollisionStay2D(Collision2D collision)
     {
