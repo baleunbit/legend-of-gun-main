@@ -247,7 +247,12 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      1000004740-ezgif.com-gif-to-sprite-converter_0: 5263435380630209463
+      1000004740-ezgif.com-gif-to-sprite-converter_1: -932484275746273381
+      1000004740-ezgif.com-gif-to-sprite-converter_2: 849318186502579130
+      1000004740-ezgif.com-gif-to-sprite-converter_3: -5874707638299183318
+      1000004740-ezgif.com-gif-to-sprite-converter_4: -796541826056944115
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
