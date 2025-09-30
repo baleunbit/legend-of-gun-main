@@ -37,10 +37,10 @@ public class Bullet : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D col)
     {
-        // ✅ 플레이어/룸 등은 완전 무시 (관통 소모 X)
+        // 플레이어/룸은 무시
         if (col.CompareTag("Player") || col.CompareTag("Room")) return;
 
-        // ✅ 적에게만 작동 (관통 소모 O)
+        // 몹이면 데미지 + 관통 처리
         var mob = col.GetComponentInParent<Mob>() ?? col.GetComponent<Mob>();
         if (mob != null)
         {
@@ -50,7 +50,15 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        // 그 외 오브젝트(벽/소품 등)는 무시 (관통 소모 X, 파괴 X)
-        // => 필요하면 여기서 처리 추가
+        // 🔽 환경 오브젝트(총알 막는 용) 태그로 처리
+        if (col.CompareTag("GameObject") ||
+            (col.transform.parent && col.transform.parent.CompareTag("GameObject")))
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        // 필요하면 여기서 기본 처리(전부 제거)도 가능
+        // Destroy(gameObject);
     }
 }

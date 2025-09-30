@@ -1,36 +1,29 @@
 ﻿using UnityEngine;
 
-/// 몹 탐지 가시화(항상 표시): 파란 원=근접/소리, 노란 부채꼴=시야, 흰 화살표=정면
 [RequireComponent(typeof(Mob))]
 public class MobSenseVisualizerClear : MonoBehaviour
 {
-    [Header("스타일")]
-    [Range(8, 256)] public int circleSegments = 64;
+    [Range(12, 256)] public int segments = 64;
     public float lineWidth = 0.035f;
     [Range(0f, 1f)] public float alpha = 0.35f;
 
-    [Header("색상")]
-    public Color proximityColor = new(0.2f, 0.7f, 1f, 0.6f); // 근접 원(파랑)
-    public Color fovColor = new(1f, 0.9f, 0.1f, 0.6f); // 시야 부채꼴(노랑)
-    public Color forwardColor = new(1f, 1f, 1f, 0.9f);     // 정면 화살표(흰색)
+    public Color ringColor = new(0.2f, 0.7f, 1f, 0.6f); // 근접(원)
+    public Color fovColor = new(1f, 0.9f, 0.1f, 0.6f); // 시야(부채꼴)
 
     Mob mob;
-    LineRenderer ringLR;    // 근접 원
-    LineRenderer fovLR;     // 시야 호
-    Camera cam;
+    LineRenderer ring;    // 근접 원
+    LineRenderer fan;     // 시야 부채꼴 (중심 포함)
 
     void Awake()
     {
         mob = GetComponent<Mob>();
-        cam = Camera.main;
-
-        ringLR = CreateLR("SenseRing");
-        fovLR = CreateLR("SenseFOV");
+        ring = MakeLR("SenseRing");
+        fan = MakeLR("SenseFOV");
     }
 
-    LineRenderer CreateLR(string name)
+    LineRenderer MakeLR(string n)
     {
-        var go = new GameObject(name);
+        var go = new GameObject(n);
         go.transform.SetParent(transform, false);
         var lr = go.AddComponent<LineRenderer>();
         lr.useWorldSpace = true;
@@ -43,49 +36,55 @@ public class MobSenseVisualizerClear : MonoBehaviour
 
     void Update()
     {
-        DrawProximityRing();
-        DrawFOVArc();
+        DrawRing();
+        DrawFan();
     }
 
-    void DrawProximityRing()
+    void DrawRing()
     {
         float r = Mathf.Max(0.01f, mob.detectRadius);
-        int N = Mathf.Max(8, circleSegments);
-
-        ringLR.positionCount = N + 1;
-        var c = proximityColor; c.a = alpha;
-        ringLR.startColor = ringLR.endColor = c;
+        int N = Mathf.Max(12, segments);
+        ring.positionCount = N + 1;
+        var c = ringColor; c.a = alpha;
+        ring.startColor = ring.endColor = c;
 
         Vector3 center = transform.position;
         for (int i = 0; i <= N; i++)
         {
             float t = (float)i / N * Mathf.PI * 2f;
             Vector3 p = new Vector3(Mathf.Cos(t), Mathf.Sin(t), 0f) * r + center;
-            ringLR.SetPosition(i, p);
+            ring.SetPosition(i, p);
         }
     }
 
-    void DrawFOVArc()
+    void DrawFan()
     {
         float dist = Mathf.Max(0.01f, mob.viewDistance);
         float half = Mathf.Clamp(mob.fovAngle * 0.5f, 0f, 180f);
-        int N = Mathf.Max(8, circleSegments / 2);
+        int N = Mathf.Max(12, segments / 2);
 
+        // Mob 내부에서 관리하는 정면을 얻기 위해 작은 헬퍼 제공했다고 가정 (없어도 sprite flip으로 근사)
+        Vector2 forward;
         var sr = GetComponentInChildren<SpriteRenderer>();
-        Vector2 forward = (sr != null && sr.flipX) ? Vector2.left : Vector2.right;
+        forward = (sr != null && sr.flipX) ? Vector2.left : Vector2.right;
 
-        fovLR.positionCount = N + 1;
+        // 부채꼴: [중심] + [호를 따라 N+1점] + [다시 중심]
+        fan.positionCount = N + 3;
         var c = fovColor; c.a = alpha;
-        fovLR.startColor = fovLR.endColor = c;
+        fan.startColor = fan.endColor = c;
 
         Vector3 center = transform.position;
+        fan.SetPosition(0, center);
+
         float start = -half;
         for (int i = 0; i <= N; i++)
         {
             float a = start + (half * 2f) * (i / (float)N);
             Vector2 dir = Quaternion.Euler(0, 0, a) * forward;
             Vector3 p = (Vector3)(dir.normalized * dist) + center;
-            fovLR.SetPosition(i, p);
+            fan.SetPosition(1 + i, p);
         }
+
+        fan.SetPosition(N + 2, center);
     }
 }

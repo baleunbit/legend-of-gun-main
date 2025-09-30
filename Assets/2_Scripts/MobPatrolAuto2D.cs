@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 
-/// 순찰 포인트 없이 자동 경로만 사용(사각형/십자).
-/// 발견 전엔 순찰, 발견하면 Mob이 추격. Mob 없으면 그냥 순찰만.
 [RequireComponent(typeof(Rigidbody2D))]
 public class MobPatrolAuto2D : MonoBehaviour
 {
@@ -9,57 +7,53 @@ public class MobPatrolAuto2D : MonoBehaviour
 
     [Header("자동 경로")]
     public AutoPattern pattern = AutoPattern.Rectangle;
-    public Vector2 halfSize = new(1.5f, 1.0f); // Rectangle 반폭/반높이
-    public float crossRadius = 1.5f;           // Cross 반경
+    public Vector2 halfSize = new(1.5f, 1.0f);
+    public float crossRadius = 1.5f;
 
     [Header("이동/대기")]
     public float patrolSpeed = 3f;
     public float arriveDist = 0.05f;
     public float waitAtPoint = 0.4f;
-    public bool pingPong = true;               // 왕복(true) / 루프(false)
+    public bool pingPong = true;
 
-    // 내부
     Rigidbody2D rb;
-    SpriteRenderer sr;
-    Mob mob;                 // 있을 수도, 없을 수도
-    Vector2[] waypoints;     // 자동 생성 경로
+    Mob mob;
+    Vector2[] waypoints;
     int idx = 0, dir = +1;
     float waitTimer = 0f;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        sr = GetComponentInChildren<SpriteRenderer>(true);
-        mob = GetComponent<Mob>(); // null 가능
+        mob = GetComponent<Mob>(); // 있을 수도, 없을 수도
 
         BuildAutoPath();
 
-        // 디싱크(동일 움직임 방지)
+        // 살짝 디싱크
         if (waypoints != null && waypoints.Length > 1)
+        {
             idx = Random.Range(0, waypoints.Length);
-        dir = Random.value < 0.5f ? +1 : -1;
-        waitTimer = Random.Range(0f, waitAtPoint);
-        patrolSpeed *= Random.Range(0.9f, 1.1f);
+            dir = Random.value < 0.5f ? +1 : -1;
+            waitTimer = Random.Range(0f, waitAtPoint);
+            patrolSpeed *= Random.Range(0.9f, 1.1f);
+        }
     }
+
     void BuildAutoPath()
     {
         Vector2 c = transform.position;
-
         if (pattern == AutoPattern.Rectangle)
         {
-            // 시계 방향 4점(좌→상→우→하)
-            waypoints = new Vector2[]
-            {
+            waypoints = new Vector2[] {
                 c + new Vector2(-halfSize.x,  0f),
                 c + new Vector2( 0f,          +halfSize.y),
                 c + new Vector2(+halfSize.x,  0f),
                 c + new Vector2( 0f,          -halfSize.y),
             };
         }
-        else // Cross
+        else
         {
-            waypoints = new Vector2[]
-            {
+            waypoints = new Vector2[] {
                 c + Vector2.left  * crossRadius,
                 c + Vector2.up    * crossRadius,
                 c + Vector2.right * crossRadius,
@@ -67,11 +61,24 @@ public class MobPatrolAuto2D : MonoBehaviour
             };
         }
     }
+
     void FixedUpdate()
     {
-        // Mob이 있고 플레이어를 발견했다면 순찰 중지
+        // 발각되면 순찰 중단(추격은 Mob이 함)
         if (mob != null && mob.IsAlerted) { rb.linearVelocity = Vector2.zero; return; }
 
+        // 360° 근접(소리) 반응: 플레이어 쪽으로 "한 스텝"만
+        if (mob != null && mob.IsPlayerInHearingRange())
+        {
+            Vector2 dirToPlayer = (mob.target.position - rb.position);
+            Vector2 step = dirToPlayer.normalized * patrolSpeed * Time.fixedDeltaTime;
+            rb.MovePosition(rb.position + step);
+            rb.linearVelocity = Vector2.zero;
+            mob.SetLook(dirToPlayer); // 시선 = 움직임 방향(8방향 스냅)
+            return;
+        }
+
+        // ---- 기본 순찰 ----
         if (waypoints == null || waypoints.Length == 0) return;
 
         if (waitTimer > 0f)
@@ -97,12 +104,25 @@ public class MobPatrolAuto2D : MonoBehaviour
             Vector2 step = to.normalized * patrolSpeed * Time.fixedDeltaTime;
             rb.MovePosition(cur + step);
             rb.linearVelocity = Vector2.zero;
-
-            // 좌우 이동할 때만 시선 전환(상하 이동 중엔 유지)
-            if (sr && Mathf.Abs(step.x) > 0.001f)
-                sr.flipX = step.x < 0f;
+            if (mob) mob.SetLook(to); // 시선 = 이동 방향(8방향 스냅)
         }
     }
+
+    public void KillSilently()
+    {
+        if (!isLive) return;   // 이미 죽었으면 무시
+        isLive = false;
+
+        // 몹의 충돌/물리 비활성화
+        var cols = GetComponentsInChildren<Collider2D>(true);
+        foreach (var c in cols) if (c) c.enabled = false;
+        if (rb) rb.simulated = false;
+
+        // 바로 제거
+        Destroy(gameObject);
+    }
+
+
     void AdvanceIndex()
     {
         int len = waypoints.Length;
@@ -119,35 +139,4 @@ public class MobPatrolAuto2D : MonoBehaviour
             idx = (idx + 1) % len;
         }
     }
-
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        // 자동 경로 미리보기(선택)
-        Gizmos.color = new Color(0, 1, 1, 0.25f);
-        Vector2 c = transform.position;
-
-        if (pattern == AutoPattern.Rectangle)
-        {
-            Vector2 L = c + new Vector2(-halfSize.x, 0);
-            Vector2 R = c + new Vector2(+halfSize.x, 0);
-            Vector2 U = c + new Vector2(0, +halfSize.y);
-            Vector2 D = c + new Vector2(0, -halfSize.y);
-            Gizmos.DrawSphere(L, 0.06f); Gizmos.DrawSphere(U, 0.06f);
-            Gizmos.DrawSphere(R, 0.06f); Gizmos.DrawSphere(D, 0.06f);
-            Gizmos.DrawLine(L, U); Gizmos.DrawLine(U, R);
-            Gizmos.DrawLine(R, D); Gizmos.DrawLine(D, L);
-        }
-        else
-        {
-            Vector2 L = c + Vector2.left * crossRadius;
-            Vector2 U = c + Vector2.up * crossRadius;
-            Vector2 R = c + Vector2.right * crossRadius;
-            Vector2 D = c + Vector2.down * crossRadius;
-            Gizmos.DrawSphere(L, 0.06f); Gizmos.DrawSphere(U, 0.06f);
-            Gizmos.DrawSphere(R, 0.06f); Gizmos.DrawSphere(D, 0.06f);
-            Gizmos.DrawLine(L, R); Gizmos.DrawLine(U, D);
-        }
-    }
-#endif
 }
