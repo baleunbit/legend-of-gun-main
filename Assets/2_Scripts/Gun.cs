@@ -17,6 +17,9 @@ public class Gun : MonoBehaviour
     [SerializeField] float Damage = 5f;
     [SerializeField] int Pierce = 1;  // 1=관통없음
 
+    // Gun.cs 상단 필드들 사이에 추가
+    [SerializeField] private GameObject reloadCircleObj;
+
     [SerializeField] GameObject bulletPrefab;
 
     int currentAmmo;
@@ -34,6 +37,7 @@ public class Gun : MonoBehaviour
 
         currentAmmo = maxAmmo;
         nextFireTime = 0f;
+        if (reloadCircleObj) reloadCircleObj.SetActive(false);
 
         // UI 매니저가 아직 초기화 전일 수 있으니 널가드
         UIManager.Instance?.UpdateAmmoText(currentAmmo, maxAmmo);
@@ -86,12 +90,24 @@ public class Gun : MonoBehaviour
 
     IEnumerator Reload()
     {
+        if (isReloading) yield break;
         isReloading = true;
-        yield return new WaitForSeconds(reloadTime); // 사망 시 UI에서 Time.timeScale=0이 되면, 리로드는 자연스럽게 멈춥니다.
+
+        // ⏱ 리로드 시작 → UI 켜기
+        if (reloadCircleObj) reloadCircleObj.SetActive(true);
+
+        // 그냥 시간만 기다리면 됨 (애니메이션은 자동 재생)S
+        yield return new WaitForSeconds(reloadTime);
+
+        // 리로드 완료 → 탄창 회복
         currentAmmo = maxAmmo;
         isReloading = false;
         UIManager.Instance?.UpdateAmmoText(currentAmmo, maxAmmo);
+
+        // ⏱ 리로드 끝 → UI 끄기
+        if (reloadCircleObj) reloadCircleObj.SetActive(false);
     }
+
 
     void Fire()
     {

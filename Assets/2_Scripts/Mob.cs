@@ -3,7 +3,7 @@
 [RequireComponent(typeof(Rigidbody2D), typeof(SpriteRenderer))]
 public class Mob : MonoBehaviour
 {
-    [Header("이동")]
+    [Header("이동/추격")]
     public float Speed = 7f;
 
     [Header("공격")]
@@ -11,41 +11,41 @@ public class Mob : MonoBehaviour
     public int maxDamage = 5;
     public float attackCooldown = 1f;
 
-    [Header("탐지(발견 전까지)")]
-    public float detectRadius = 4f;                  // ✅ 근접(소리) 반경: 의심만, 발각 NO
-    public float viewDistance = 6f;                  // 시야 거리
-    [Range(0, 180)] public float fovAngle = 80f;     // 시야각
-    public LayerMask obstacleMask;                   // 가림 체크용(시야)
-
-    [Header("발각 규칙 (사용 안 함)")]
-    public float proximityAlertTime = 5f;            // (과거 로직: 근접 유지로 발각) — 지금은 미사용
+    [Header("탐지")]
+    public float detectRadius = 4f;    // 근접 범위 (의심)
+    public float viewDistance = 6f;    // 시야 거리 (발각)
+    [Range(0, 180)] public float fovAngle = 80f;
+    public LayerMask obstacleMask;
 
     [Header("참조")]
-    public Rigidbody2D target;                       // Player Rigidbody2D
+    public Rigidbody2D target;
+    [SerializeField] Animator anim;    // 인스펙터로 연결 (있으면 자동 할당)
 
-    [Header("표식(선택)")]
-    public GameObject questionMark;                  // 머리 위 ? (근접 의심)
-    public GameObject exclamationMark;               // 머리 위 ! (발각)
+    [Header("표식")]
+    public GameObject questionMark;
+    public GameObject exclamationMark;
 
     [Header("체력")]
     public int maxHP = 30;
 
-    // 외부에서 읽기
+    // ---------- 외부에서 읽는 프로퍼티 ----------
+    // 다른 스크립트(Bite 등)에서 사용하므로 public으로 노출
     public bool IsAlerted => hasSpotted;
     public bool IsAlive => isLive;
 
-    // 내부 상태
-    int currentHP;
-    bool isLive = true;
-    bool hasSpotted = false;         // true 되면 계속 추격
-    float nextAttackTime = 0f;
-    bool dealtThisFixed = false;
+    // ---------- 내부 상태 ----------
+    private int currentHP;
+    private bool isLive = true;      // 살아있는지
+    private bool hasSpotted = false; // 발각 여부 (true면 추격/공격)
+    private float nextAttackTime = 0f;
+    private bool dealtThisFixed = false;
 
-    // (과거) 근접 유지 타이머 — 현재는 발각에 사용하지 않음
-    float proximityTimer = 0f;
+    private Rigidbody2D rb;
+    private SpriteRenderer sr;
 
-    Rigidbody2D rb;
-    SpriteRenderer sr;
+    // Animator 관련
+    private int hashIsWalk, hashDoAttack;
+    private Vector2 prevPos;
 
     void Awake()
     {
@@ -60,6 +60,12 @@ public class Mob : MonoBehaviour
             if (p) target = p.GetComponent<Rigidbody2D>();
         }
 
+        if (!anim) anim = GetComponentInChildren<Animator>(true);
+        hashIsWalk = Animator.StringToHash("isWalk");
+        hashDoAttack = Animator.StringToHash("doAttack");
+
+        prevPos = rb.position;
+
         ShowQuestion(false);
         ShowAlert(false);
     }
@@ -68,84 +74,138 @@ public class Mob : MonoBehaviour
     {
         dealtThisFixed = false;
 
-        if (!isLive || !target)
-        {
-            rb.linearVelocity = Vector2.zero;
-            return;
-        }
-
-        // 1) 발각 전: 근접 의심 표시만, 시야에 걸리면 발각
-        if (!hasSpotted)
-        {
-            HandleProximitySuspicion();     // ❗ 의심만 — 발각하지 않음
-
-            if (!hasSpotted && CanDetectPlayer())
-            {
-                SetAlerted(); // ! + 추격 시작 (Speed 사용은 Mob이 담당)
-            }
-        }
-
-        // 2) 발각 후: 추격
         if (hasSpotted)
         {
-            Vector2 dir = (target.position - rb.position).normalized;
-            rb.MovePosition(rb.position + dir * Speed * Time.fixedDeltaTime);
-            sr.flipX = target.position.x < rb.position.x; // 시선
+            float dt = Time.fixedDeltaTime;
+            Vector2 cur = rb.position;
+            Vector2 toTarget = (Vector2)target.position - cur;
+            Vector2 dir = toTarget.normalized;
+
+            // 바로 앞에 뭔가 있나 짧게 캐스트 (태그로만 필터)
+            RaycastHit2D hit = Physics2D.CircleCast(cur, 0.2f, dir, 0.12f);
+            bool blocked =
+                hit.collider != null &&
+                (
+                    hit.collider.CompareTag("GameObject") ||   // 벽/기둥/상자 등에 공통으로 붙일 태그
+                    hit.collider.CompareTag("GameObject") ||       // 쓰는 태그가 따로면 여기에 추가
+                    hit.collider.CompareTag("GameObject")
+                );
+
+            if (blocked)
+            {
+                // 벽에 닿았으면 벽 접선 방향으로 한 스텝 미끄러지기
+                Vector2 n = hit.normal;
+                Vector2 t1 = new Vector2(-n.y, n.x).normalized;
+                Vector2 t2 = new Vector2(n.y, -n.x).normalized;
+
+                Vector2 cand1 = cur + t1 * Speed * dt;
+                Vector2 cand2 = cur + t2 * Speed * dt;
+                float d1 = ((Vector2)target.position - cand1).sqrMagnitude;
+                float d2 = ((Vector2)target.position - cand2).sqrMagnitude;
+
+                Vector2 slide = (d1 < d2 ? t1 : t2);
+                rb.MovePosition(cur + slide * Speed * dt);
+            }
+            else
+            {
+                // 막힌 게 없으면 직선 추격
+                rb.MovePosition(cur + dir * Speed * dt);
+            }
+
+            bool faceLeft = target.position.x < rb.position.x;
+            transform.localScale = new Vector3(faceLeft ? -1f : 1f, 1f, 1f);
         }
 
+        // 발각 전/발각 처리(기존 로직)
+        if (!hasSpotted)
+        {
+            HandleProximitySuspicion();
+            if (!hasSpotted && CanDetectPlayer()) SetAlerted();
+        }
+
+        // 발각 후 추격 (이동은 항상 수행)
+        if (hasSpotted)
+        {
+            rb.MovePosition(rb.position + (target.position - rb.position).normalized * Speed * Time.fixedDeltaTime);
+            sr.flipX = target.position.x < rb.position.x;
+        }
+
+        // 이동 여부 판정 — 단, Attack 상태일 때는 검사/갱신하지 않음
+        bool isInAttack = anim && anim.GetCurrentAnimatorStateInfo(0).IsName("Attack");
+        if (!isInAttack)
+        {
+            Vector2 delta = rb.position - prevPos;
+            bool moved = delta.sqrMagnitude > 0.000001f;
+            if (anim) anim.SetBool(hashIsWalk, moved);
+        }
+        // Attack 중이면 isWalk 갱신을 건너뜀 -> 깜빡임 제거
+
         rb.linearVelocity = Vector2.zero;
+        prevPos = rb.position;
+
+        if (anim)
+        {
+            bool walking = hasSpotted && isLive; // 추격 중일 때만 걷기
+            anim.SetBool("isWalk", walking);
+        }
+
+        if (anim)
+        {
+            // 현재 위치에서 목표까지의 거리
+            float dist = Vector2.Distance(rb.position, target.position);
+
+            // 거리가 일정 이상이면 걷기 = true, 아니면 Idle
+            bool walking = hasSpotted && dist > 0.1f;
+            anim.SetBool("isWalk", walking);
+        }
     }
 
-    void LateUpdate()
-    {
-        if (!isLive || !target) return;
-    }
 
-    // ───────────────────────────────────
-    // 근접 유지 감시 (이제는 의심만, 발각 NO)
+    // ----------------- 근접(의심) -----------------
     void HandleProximitySuspicion()
     {
-    bool inRange = Vector2.SqrMagnitude(target.position - rb.position) <= detectRadius * detectRadius;
-
-    if (inRange)
-    {
-        ShowQuestion(true); // ? 만 켜기
-        // 절대 SetAlerted() 부르지 않음
-    }
-    else
-    {
-        ShowQuestion(false);
-    }
+        bool inRange = Vector2.SqrMagnitude(target.position - rb.position) <= detectRadius * detectRadius;
+        if (inRange) ShowQuestion(true);
+        else ShowQuestion(false);
     }
 
     void SetAlerted()
     {
         hasSpotted = true;
-        proximityTimer = 0f;
         ShowQuestion(false);
         ShowAlert(true);
     }
 
-    // ───────────────────────────────────
-    // 충돌 공격
-    void OnCollisionEnter2D(Collision2D c) { TryDealDamage(c); }
-    void OnCollisionStay2D(Collision2D c) { TryDealDamage(c); }
+    // ----------------- 공격 (충돌/트리거 모두 대응) -----------------
+    void OnCollisionEnter2D(Collision2D c) { TryAttack(c.collider); }
+    void OnCollisionStay2D(Collision2D c) { TryAttack(c.collider); }
     void OnCollisionExit2D(Collision2D c)
     {
         if (c.collider.CompareTag("Player")) nextAttackTime = 0f;
     }
 
-    void TryDealDamage(Collision2D c)
+    void OnTriggerEnter2D(Collider2D c) { TryAttack(c); }
+    void OnTriggerStay2D(Collider2D c) { TryAttack(c); }
+    void OnTriggerExit2D(Collider2D c)
+    {
+        if (c.CompareTag("Player")) nextAttackTime = 0f;
+    }
+
+    void TryAttack(Collider2D col)
     {
         if (!isLive) return;
-        if (!c.collider.CompareTag("Player")) return;
-        if (!hasSpotted) return;                 // 발각 전 공격 금지
-        if (dealtThisFixed) return;
+        if (!col || !col.CompareTag("Player")) return;
+        if (!hasSpotted) return;                 // 발각 전에는 공격 안 함
         if (Time.time < nextAttackTime) return;
+        if (dealtThisFixed) return;
 
-        var player = c.collider.GetComponentInParent<Player>();
+        var player = col.GetComponentInParent<Player>();
         if (!player) return;
 
+        // Attack 애니메이션 트리거
+        if (anim) anim.SetTrigger(hashDoAttack);
+
+        // 데미지 적용
         int dmg = Random.Range(minDamage, maxDamage + 1);
         player.TakeDamage(dmg);
 
@@ -153,8 +213,7 @@ public class Mob : MonoBehaviour
         dealtThisFixed = true;
     }
 
-    // ───────────────────────────────────
-    // 시야 감지 (발각 전만)
+    // ----------------- 시야(발각) 체크 -----------------
     bool CanDetectPlayer()
     {
         Vector2 myPos = rb.position;
@@ -167,7 +226,6 @@ public class Mob : MonoBehaviour
         float angle = Vector2.Angle(forward, to.normalized);
         if (angle > (fovAngle * 0.5f)) return false;
 
-        // 가림 체크
         return !Blocked(myPos, target.position);
     }
 
@@ -177,21 +235,19 @@ public class Mob : MonoBehaviour
         return hit.collider != null;
     }
 
-    // ───────────────────────────────────
-    // 피해/사망
+    // ----------------- 피해/사망 -----------------
     public void TakeDamage(int damage)
     {
         if (!isLive) return;
-
         currentHP -= Mathf.Max(1, damage);
 
-        // 총/공격을 맞으면 즉시 발각 (스텔스 실패)
+        // 맞으면 발각
         SetAlerted();
 
         if (currentHP <= 0) Die();
     }
 
-    public void KillSilently()
+    public void KillSilently()  // Bite에서 호출하는 메서드: 외부에서 안전하게 사용
     {
         if (!isLive) return;
         isLive = false;
@@ -202,8 +258,6 @@ public class Mob : MonoBehaviour
 
         Destroy(gameObject);
     }
-
-    public void OnDamage(float damage) => TakeDamage(Mathf.RoundToInt(damage));
 
     void Die()
     {
@@ -218,33 +272,7 @@ public class Mob : MonoBehaviour
         Destroy(gameObject);
     }
 
-    // ───────────────────────────────────
-    // 머리표시 on/off
-    void ShowQuestion(bool on)
-    {
-        if (questionMark && questionMark.activeSelf != on) questionMark.SetActive(on);
-    }
-    void ShowAlert(bool on)
-    {
-        if (exclamationMark && exclamationMark.activeSelf != on) exclamationMark.SetActive(on);
-    }
-
-    // 디버그
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = new Color(0.2f, 0.7f, 1f, 0.25f);
-        Gizmos.DrawWireSphere(transform.position, detectRadius);
-
-        Gizmos.color = new Color(1f, 0.9f, 0.1f, 0.25f);
-        Vector2 forward = Vector2.right;
-        var sr0 = GetComponentInChildren<SpriteRenderer>();
-        if (sr0 && sr0.flipX) forward = Vector2.left;
-        float half = fovAngle * 0.5f;
-        Vector2 L = Quaternion.Euler(0, 0, +half) * forward * viewDistance;
-        Vector2 R = Quaternion.Euler(0, 0, -half) * forward * viewDistance;
-        Gizmos.DrawLine(transform.position, (Vector2)transform.position + L);
-        Gizmos.DrawLine(transform.position, (Vector2)transform.position + R);
-    }
-#endif
+    // ----------------- UI 표식 -----------------
+    void ShowQuestion(bool on) { if (questionMark && questionMark.activeSelf != on) questionMark.SetActive(on); }
+    void ShowAlert(bool on) { if (exclamationMark && exclamationMark.activeSelf != on) exclamationMark.SetActive(on); }
 }

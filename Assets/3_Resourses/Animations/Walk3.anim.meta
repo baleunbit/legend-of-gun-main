@@ -1,15 +1,8 @@
 fileFormatVersion: 2
-guid: 107f73650c0ce714ab8d88c06cab896a
+guid: 643d4c00f1eecc647b01c508ef81f572
 NativeFormatImporter:
   externalObjects: {}
-  mainObjectFileID: 0
+  mainObjectFileID: 7400000
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 188722
-  packageName: Bolt 2D JellyFarm Assets Pack
-  packageVersion: 1.0
-  assetPath: Assets/Bolt 2D JellyFarm VE2/Animations/Walk3.anim
-  uploadId: 417298
