@@ -12,40 +12,38 @@ public class Mob : MonoBehaviour
     public float attackCooldown = 1f;
 
     [Header("탐지")]
-    public float detectRadius = 4f;    // 근접 범위 (의심)
-    public float viewDistance = 6f;    // 시야 거리 (발각)
-    [Range(0, 180)] public float fovAngle = 80f;
-    public LayerMask obstacleMask;
+    public float detectRadius = 4f;    // 외부 감지(원) → ? 표시 전용
+    public float viewDistance = 6f;    // 시야 거리(부채꼴)
+    [Range(0, 180)] public float fovAngle = 80f;   // 부채꼴 각도
 
     [Header("참조")]
-    public Rigidbody2D target;
-    [SerializeField] Animator anim;    // 인스펙터로 연결 (있으면 자동 할당)
+    public Rigidbody2D target;               // 플레이어 Rigidbody2D
+    [SerializeField] Animator anim;          // (선택) 애니메이터 사용 시 연결
 
-    [Header("표식")]
-    public GameObject questionMark;
-    public GameObject exclamationMark;
+    [Header("표식(월드 오브젝트)")]
+    public GameObject questionMark;          // ?
+    public GameObject exclamationMark;       // !
 
     [Header("체력")]
     public int maxHP = 30;
 
-    // ---------- 외부에서 읽는 프로퍼티 ----------
-    // 다른 스크립트(Bite 등)에서 사용하므로 public으로 노출
+    // 외부에서 읽는 상태
     public bool IsAlerted => hasSpotted;
     public bool IsAlive => isLive;
 
-    // ---------- 내부 상태 ----------
-    private int currentHP;
-    private bool isLive = true;      // 살아있는지
-    private bool hasSpotted = false; // 발각 여부 (true면 추격/공격)
-    private float nextAttackTime = 0f;
-    private bool dealtThisFixed = false;
+    // 내부 상태
+    int currentHP;
+    bool isLive = true;
+    bool hasSpotted = false;
+    float nextAttackTime = 0f;
+    bool dealtThisFixed = false;
 
-    private Rigidbody2D rb;
-    private SpriteRenderer sr;
+    Rigidbody2D rb;
+    SpriteRenderer sr;
 
-    // Animator 관련
-    private int hashIsWalk, hashDoAttack;
-    private Vector2 prevPos;
+    // (선택) 애니 파라미터
+    int hashIsWalk, hashDoAttack;
+    Vector2 prevPos;
 
     void Awake()
     {
@@ -61,112 +59,123 @@ public class Mob : MonoBehaviour
         }
 
         if (!anim) anim = GetComponentInChildren<Animator>(true);
-        hashIsWalk = Animator.StringToHash("isWalk");
-        hashDoAttack = Animator.StringToHash("doAttack");
+        if (anim)
+        {
+            hashIsWalk = Animator.StringToHash("isWalk");
+            hashDoAttack = Animator.StringToHash("doAttack");
+        }
 
-        prevPos = rb.position;
+        // 마커가 가려지지 않게 정렬/위치 보정
+        SetupMarker(questionMark);
+        SetupMarker(exclamationMark);
 
         ShowQuestion(false);
         ShowAlert(false);
+
+        prevPos = rb.position;
     }
 
     void FixedUpdate()
     {
         dealtThisFixed = false;
 
-        if (hasSpotted)
+        if (!isLive || !target)
         {
-            float dt = Time.fixedDeltaTime;
-            Vector2 cur = rb.position;
-            Vector2 toTarget = (Vector2)target.position - cur;
-            Vector2 dir = toTarget.normalized;
+            rb.linearVelocity = Vector2.zero;
+            if (anim) anim.SetBool(hashIsWalk, false);
+            prevPos = rb.position;
+            return;
+        }
 
-            // 바로 앞에 뭔가 있나 짧게 캐스트 (태그로만 필터)
-            RaycastHit2D hit = Physics2D.CircleCast(cur, 0.2f, dir, 0.12f);
-            bool blocked =
-                hit.collider != null &&
-                (
-                    hit.collider.CompareTag("GameObject") ||   // 벽/기둥/상자 등에 공통으로 붙일 태그
-                    hit.collider.CompareTag("GameObject") ||       // 쓰는 태그가 따로면 여기에 추가
-                    hit.collider.CompareTag("GameObject")
-                );
+        // ───────── 발각 전: ?/! 결정 ─────────
+        if (!hasSpotted)
+        {
+            float sqr = (target.position - rb.position).sqrMagnitude;
+            bool inProximity = sqr <= detectRadius * detectRadius;  // 원
+            bool inFov = InFovAndVisible();                         // 부채꼴 + 가림 없음
 
-            if (blocked)
+            if (inFov)
             {
-                // 벽에 닿았으면 벽 접선 방향으로 한 스텝 미끄러지기
-                Vector2 n = hit.normal;
-                Vector2 t1 = new Vector2(-n.y, n.x).normalized;
-                Vector2 t2 = new Vector2(n.y, -n.x).normalized;
-
-                Vector2 cand1 = cur + t1 * Speed * dt;
-                Vector2 cand2 = cur + t2 * Speed * dt;
-                float d1 = ((Vector2)target.position - cand1).sqrMagnitude;
-                float d2 = ((Vector2)target.position - cand2).sqrMagnitude;
-
-                Vector2 slide = (d1 < d2 ? t1 : t2);
-                rb.MovePosition(cur + slide * Speed * dt);
+                // 부채꼴에 들어오면 즉시 발각 → !
+                SetAlerted();
             }
             else
             {
-                // 막힌 게 없으면 직선 추격
-                rb.MovePosition(cur + dir * Speed * dt);
+                // 시야엔 없음: 원 안이면 ? 표시, 아니면 둘 다 off
+                ShowQuestion(inProximity);
+                ShowAlert(false);
             }
 
-            bool faceLeft = target.position.x < rb.position.x;
-            transform.localScale = new Vector3(faceLeft ? -1f : 1f, 1f, 1f);
+            // 발각 전엔 이동하지 않음
+            if (!hasSpotted)
+            {
+                rb.linearVelocity = Vector2.zero;
+                if (anim) anim.SetBool(hashIsWalk, false);
+                prevPos = rb.position;
+                return;
+            }
         }
 
-        // 발각 전/발각 처리(기존 로직)
-        if (!hasSpotted)
-        {
-            HandleProximitySuspicion();
-            if (!hasSpotted && CanDetectPlayer()) SetAlerted();
-        }
+        // ───────── 발각 후: 추격 이동 ─────────
+        Vector2 cur = rb.position;
+        Vector2 dir = ((Vector2)target.position - cur).normalized;
+        rb.MovePosition(cur + dir * Speed * Time.fixedDeltaTime);
 
-        // 발각 후 추격 (이동은 항상 수행)
-        if (hasSpotted)
-        {
-            rb.MovePosition(rb.position + (target.position - rb.position).normalized * Speed * Time.fixedDeltaTime);
-            sr.flipX = target.position.x < rb.position.x;
-        }
+        // 좌우 바라보기
+        sr.flipX = target.position.x < rb.position.x;
 
-        // 이동 여부 판정 — 단, Attack 상태일 때는 검사/갱신하지 않음
-        bool isInAttack = anim && anim.GetCurrentAnimatorStateInfo(0).IsName("Attack");
-        if (!isInAttack)
-        {
-            Vector2 delta = rb.position - prevPos;
-            bool moved = delta.sqrMagnitude > 0.000001f;
-            if (anim) anim.SetBool(hashIsWalk, moved);
-        }
-        // Attack 중이면 isWalk 갱신을 건너뜀 -> 깜빡임 제거
+        // (선택) 애니: 걷기 on
+        if (anim) anim.SetBool(hashIsWalk, true);
 
         rb.linearVelocity = Vector2.zero;
         prevPos = rb.position;
-
-        if (anim)
-        {
-            bool walking = hasSpotted && isLive; // 추격 중일 때만 걷기
-            anim.SetBool("isWalk", walking);
-        }
-
-        if (anim)
-        {
-            // 현재 위치에서 목표까지의 거리
-            float dist = Vector2.Distance(rb.position, target.position);
-
-            // 거리가 일정 이상이면 걷기 = true, 아니면 Idle
-            bool walking = hasSpotted && dist > 0.1f;
-            anim.SetBool("isWalk", walking);
-        }
     }
 
+    // 충돌 공격 (발각 후에만)
+    void OnCollisionEnter2D(Collision2D c) { TryAttack(c.collider); }
+    void OnCollisionStay2D(Collision2D c) { TryAttack(c.collider); }
+    void OnTriggerEnter2D(Collider2D c) { TryAttack(c); }
+    void OnTriggerStay2D(Collider2D c) { TryAttack(c); }
 
-    // ----------------- 근접(의심) -----------------
-    void HandleProximitySuspicion()
+    void TryAttack(Collider2D col)
     {
-        bool inRange = Vector2.SqrMagnitude(target.position - rb.position) <= detectRadius * detectRadius;
-        if (inRange) ShowQuestion(true);
-        else ShowQuestion(false);
+        if (!isLive || !hasSpotted) return;
+        if (!col || !col.CompareTag("Player")) return;
+        if (Time.time < nextAttackTime) return;
+        if (dealtThisFixed) return;
+
+        var player = col.GetComponentInParent<Player>();
+        if (!player) return;
+
+        if (anim) anim.SetTrigger(hashDoAttack);
+
+        int dmg = Random.Range(minDamage, maxDamage + 1);
+        player.TakeDamage(dmg);
+
+        nextAttackTime = Time.time + attackCooldown;
+        dealtThisFixed = true;
+    }
+
+    // ───────── 시야(FOV) + 가림 체크 ─────────
+    bool InFovAndVisible()
+    {
+        Vector2 myPos = rb.position;
+        Vector2 to = target.position - myPos;
+        float dist = to.magnitude;
+
+        if (dist > viewDistance) return false;
+
+        // 좌/우만 본다고 가정(스프라이트가 보는 방향)
+        Vector2 forward = (sr && sr.flipX) ? Vector2.left : Vector2.right;
+        float ang = Vector2.Angle(forward, to.normalized);
+        if (ang > (fovAngle * 0.5f)) return false;
+
+        // 라인 오브 사이트: "GameObject" 태그에 맞으면 가려진 것
+        var hit = Physics2D.Linecast(myPos, target.position);
+        if (hit.collider != null && hit.collider.CompareTag("GameObject"))
+            return false;
+
+        return true;
     }
 
     void SetAlerted()
@@ -176,84 +185,24 @@ public class Mob : MonoBehaviour
         ShowAlert(true);
     }
 
-    // ----------------- 공격 (충돌/트리거 모두 대응) -----------------
-    void OnCollisionEnter2D(Collision2D c) { TryAttack(c.collider); }
-    void OnCollisionStay2D(Collision2D c) { TryAttack(c.collider); }
-    void OnCollisionExit2D(Collision2D c)
-    {
-        if (c.collider.CompareTag("Player")) nextAttackTime = 0f;
-    }
-
-    void OnTriggerEnter2D(Collider2D c) { TryAttack(c); }
-    void OnTriggerStay2D(Collider2D c) { TryAttack(c); }
-    void OnTriggerExit2D(Collider2D c)
-    {
-        if (c.CompareTag("Player")) nextAttackTime = 0f;
-    }
-
-    void TryAttack(Collider2D col)
-    {
-        if (!isLive) return;
-        if (!col || !col.CompareTag("Player")) return;
-        if (!hasSpotted) return;                 // 발각 전에는 공격 안 함
-        if (Time.time < nextAttackTime) return;
-        if (dealtThisFixed) return;
-
-        var player = col.GetComponentInParent<Player>();
-        if (!player) return;
-
-        // Attack 애니메이션 트리거
-        if (anim) anim.SetTrigger(hashDoAttack);
-
-        // 데미지 적용
-        int dmg = Random.Range(minDamage, maxDamage + 1);
-        player.TakeDamage(dmg);
-
-        nextAttackTime = Time.time + attackCooldown;
-        dealtThisFixed = true;
-    }
-
-    // ----------------- 시야(발각) 체크 -----------------
-    bool CanDetectPlayer()
-    {
-        Vector2 myPos = rb.position;
-        Vector2 to = target.position - myPos;
-        float dist = to.magnitude;
-
-        if (dist > viewDistance) return false;
-
-        Vector2 forward = (sr && sr.flipX) ? Vector2.left : Vector2.right;
-        float angle = Vector2.Angle(forward, to.normalized);
-        if (angle > (fovAngle * 0.5f)) return false;
-
-        return !Blocked(myPos, target.position);
-    }
-
-    bool Blocked(Vector2 from, Vector2 to)
-    {
-        var hit = Physics2D.Linecast(from, to, obstacleMask);
-        return hit.collider != null;
-    }
-
-    // ----------------- 피해/사망 -----------------
+    // ───────── 피해/사망 ─────────
     public void TakeDamage(int damage)
     {
         if (!isLive) return;
         currentHP -= Mathf.Max(1, damage);
 
-        // 맞으면 발각
+        // 총 맞으면 즉시 발각
         SetAlerted();
 
         if (currentHP <= 0) Die();
     }
 
-    public void KillSilently()  // Bite에서 호출하는 메서드: 외부에서 안전하게 사용
+    public void KillSilently()
     {
         if (!isLive) return;
         isLive = false;
 
-        var cols = GetComponentsInChildren<Collider2D>(true);
-        foreach (var c in cols) if (c) c.enabled = false;
+        foreach (var c in GetComponentsInChildren<Collider2D>(true)) if (c) c.enabled = false;
         if (rb) rb.simulated = false;
 
         Destroy(gameObject);
@@ -272,7 +221,50 @@ public class Mob : MonoBehaviour
         Destroy(gameObject);
     }
 
-    // ----------------- UI 표식 -----------------
-    void ShowQuestion(bool on) { if (questionMark && questionMark.activeSelf != on) questionMark.SetActive(on); }
-    void ShowAlert(bool on) { if (exclamationMark && exclamationMark.activeSelf != on) exclamationMark.SetActive(on); }
+    // ───────── 마커 on/off & 셋업 ─────────
+    void ShowQuestion(bool on)
+    {
+        if (questionMark && questionMark.activeSelf != on) questionMark.SetActive(on);
+    }
+    void ShowAlert(bool on)
+    {
+        if (exclamationMark && exclamationMark.activeSelf != on) exclamationMark.SetActive(on);
+    }
+
+    void SetupMarker(GameObject go)
+    {
+        if (!go) return;
+
+        // 본체 자식으로 두고 머리 위로
+        if (go.transform.parent != transform)
+            go.transform.SetParent(transform, true);
+        go.transform.localPosition = new Vector3(0f, 0.8f, 0f);
+
+        // 스프라이트 정렬 1단계 위
+        var mSr = go.GetComponent<SpriteRenderer>();
+        if (mSr && sr)
+        {
+            mSr.sortingLayerID = sr.sortingLayerID;
+            mSr.sortingOrder = sr.sortingOrder + 1;
+        }
+    }
+
+#if UNITY_EDITOR
+    // 디버그 기즈모
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = new Color(0.2f, 0.7f, 1f, 0.25f);
+        Gizmos.DrawWireSphere(transform.position, detectRadius);
+
+        Gizmos.color = new Color(1f, 0.9f, 0.1f, 0.25f);
+        Vector2 forward = Vector2.right;
+        var sr0 = GetComponentInChildren<SpriteRenderer>();
+        if (sr0 && sr0.flipX) forward = Vector2.left;
+        float half = fovAngle * 0.5f;
+        Vector2 L = Quaternion.Euler(0, 0, +half) * forward * viewDistance;
+        Vector2 R = Quaternion.Euler(0, 0, -half) * forward * viewDistance;
+        Gizmos.DrawLine(transform.position, (Vector2)transform.position + L);
+        Gizmos.DrawLine(transform.position, (Vector2)transform.position + R);
+    }
+#endif
 }
