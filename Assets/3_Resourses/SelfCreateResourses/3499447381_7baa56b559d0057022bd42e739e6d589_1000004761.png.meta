@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d06d1da8206a9114d840be34da215891
+guid: 4c3e7474fdff998429457d9fcd0ba040
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8638724895164279180
-    second: Cracker_0
+      213: 6024494391236965529
+    second: 3499447381_7baa56b559d0057022bd42e739e6d589_1000004761_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Cracker_0
+      name: 3499447381_7baa56b559d0057022bd42e739e6d589_1000004761_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 512
-        height: 512
+        x: 63
+        y: 43
+        width: 130
+        height: 154
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c892790b58ae2e770800000000000000
-      internalID: 8638724895164279180
+      spriteID: 994330dcabd4b9350800000000000000
+      internalID: 6024494391236965529
       vertices: []
       indices: 
       edges: []

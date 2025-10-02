@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 8058562644622117239}
   - component: {fileID: 578349108094724350}
   m_Layer: 0
-  m_Name: Mob (2)
+  m_Name: Cake
   m_TagString: Mob
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

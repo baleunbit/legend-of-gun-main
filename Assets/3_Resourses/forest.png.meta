@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d06d1da8206a9114d840be34da215891
+guid: b32d6a83822cc7a43829bf3009c152fb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8638724895164279180
-    second: Cracker_0
+      213: 5360841446097186185
+    second: Sharing my pixel art (7)_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Cracker_0
+      name: Sharing my pixel art (7)_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c892790b58ae2e770800000000000000
-      internalID: 8638724895164279180
+      spriteID: 98d60db64e8856a40800000000000000
+      internalID: 5360841446097186185
       vertices: []
       indices: 
       edges: []
@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Sharing my pixel art (7)_0: 5360841446097186185
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
