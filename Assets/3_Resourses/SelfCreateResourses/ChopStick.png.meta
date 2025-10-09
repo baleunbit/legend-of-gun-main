@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: de9f69848300156448a17a0bb53e240b
+guid: 54f71ce310938d44faa9d4045add920e
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6044639580115792063
-    second: 3499447381_d9bf066c88679a4db4e6ba1b8bef27a5_1000004739_0
+      213: -7657843887886431147
+    second: Sharing my pixel art (6)_0
+  - first:
+      213: -1831978231775706506
+    second: Sharing my pixel art (6)_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +116,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: 3499447381_d9bf066c88679a4db4e6ba1b8bef27a5_1000004739_0
+      name: Sharing my pixel art (6)_0
       rect:
         serializedVersion: 2
-        x: 75
+        x: 103
         y: 39
-        width: 106
-        height: 206
+        width: 26
+        height: 194
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +131,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: fb071181cafd2e350800000000000000
-      internalID: 6044639580115792063
+      spriteID: 55c02259e8fd9b590800000000000000
+      internalID: -7657843887886431147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sharing my pixel art (6)_1
+      rect:
+        serializedVersion: 2
+        x: 135
+        y: 39
+        width: 26
+        height: 194
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 672c2c221818396e0800000000000000
+      internalID: -1831978231775706506
       vertices: []
       indices: 
       edges: []
@@ -148,7 +173,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      3499447381_d9bf066c88679a4db4e6ba1b8bef27a5_1000004739_0: 6044639580115792063
+      Sharing my pixel art (6)_0: -7657843887886431147
+      Sharing my pixel art (6)_1: -1831978231775706506
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

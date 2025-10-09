@@ -39,7 +39,7 @@ public class Mob : MonoBehaviour
     Rigidbody2D rb;
     SpriteRenderer sr;
 
-    int hashIsWalk, hashDoAttack;
+    int hashIsWalk, Attack;
     Vector2 prevPos;
 
     void Awake()
@@ -59,7 +59,7 @@ public class Mob : MonoBehaviour
         if (anim)
         {
             hashIsWalk = Animator.StringToHash("isWalk");
-            hashDoAttack = Animator.StringToHash("doAttack");
+            Attack = Animator.StringToHash("doAttack");
         }
 
         SetupMarker(questionMark);
@@ -125,7 +125,7 @@ public class Mob : MonoBehaviour
         var player = col.GetComponentInParent<Player>();
         if (!player) return;
 
-        if (anim) anim.SetTrigger(hashDoAttack);
+        if (anim) anim.SetTrigger(Attack);
 
         int dmg = Random.Range(minDamage, maxDamage + 1);
         player.TakeDamage(dmg);

@@ -8,6 +8,7 @@ TagManager:
   - Room
   - Bullet
   - GameObject
+  - Crosshair
   layers:
   - Default
   - TransparentFX
