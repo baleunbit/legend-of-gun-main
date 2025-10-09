@@ -121,6 +121,7 @@ public class Bite : MonoBehaviour
         {
             if (biteVfx) Instantiate(biteVfx, _pendingTarget.transform.position, Quaternion.identity);
             _pendingTarget.KillSilently();   // ✅ Mob의 메서드 호출
+            EatBar.Instance?.AddFromEat(10); // <- 10은 회복량 (원하면 20~30으로 테스트)
             if (debugLog) Debug.Log("[Bite] 성공 처리 완료");
         }
         _pendingTarget = null;

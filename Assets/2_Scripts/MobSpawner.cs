@@ -13,16 +13,16 @@ public class MobSpawner : MonoBehaviour
     public int maxEnemiesPerRoom = 3;
 
     [Header("겹침 방지/조건")]
-    public float avoidOthersRadius = 0.5f;   // 서로 간 최소 거리
-    public LayerMask obstacleMask;           // 겹치면 안 되는 오브젝트 레이어(벽/가구 등)
-    public int maxSpawnTriesPerEnemy = 16;   // 스폰포인트 재시도 횟수
+    public float avoidOthersRadius = 0.5f;
+    public string obstacleTag = "GameObject"; // 벽/오브젝트에 태그 지정
+    public int maxSpawnTriesPerEnemy = 16;
 
     [Header("참조(선택)")]
-    public Rigidbody2D playerRigidbody;      // Mob.target 주입
+    public Rigidbody2D playerRigidbody;
     public bool bindPlayerTargetIfPossible = true;
 
     [Header("실행 타이밍")]
-    public bool waitOneFrameForRooms = true; // RoomGenerator가 Start에서 방을 만들면 true
+    public bool waitOneFrameForRooms = true;
     public float extraDelay = 0f;
 
     void Start()
@@ -55,8 +55,6 @@ public class MobSpawner : MonoBehaviour
     void SpawnEnemiesInRoom(Room room)
     {
         if (enemyPrefabs == null || enemyPrefabs.Count == 0) return;
-
-        // ◀ SpawnPoint 전용: 방에 스폰포인트가 없으면 스킵
         var spawnPoints = room.SpawnPoints;
         if (spawnPoints == null || spawnPoints.Length == 0) return;
 
@@ -71,21 +69,19 @@ public class MobSpawner : MonoBehaviour
             bool placed = false;
             Vector2 spawnPos = default;
 
-            // 스폰포인트 중에서 랜덤 선택 → 조건 안 맞으면 다른 포인트로 재시도
             for (int tries = 0; tries < maxSpawnTriesPerEnemy && !placed; tries++)
             {
                 var sp = spawnPoints[Random.Range(0, spawnPoints.Length)];
                 var candidate = (Vector2)sp.position;
 
-                if (Blocked(candidate)) continue;                 // 장애물 위면 패스
-                if (TooClose(occupied, candidate)) continue;      // 이미 배치한 적과 너무 가까우면 패스
+                if (Blocked(candidate)) continue;
+                if (TooClose(occupied, candidate)) continue;
 
                 spawnPos = candidate;
                 placed = true;
             }
 
             if (!placed) continue;
-
             PlaceEnemy(room.gameObject, prefab, spawnPos);
             occupied.Add(spawnPos);
         }
@@ -104,17 +100,16 @@ public class MobSpawner : MonoBehaviour
         }
     }
 
-    // ==== 유틸 ====
     bool Blocked(Vector2 p)
     {
-        // 장애물과 겹치지 않게: obstacleMask에 벽/가구/기둥 등 넣어두기
-        return obstacleMask.value != 0 && Physics2D.OverlapCircle(p, 0.2f, obstacleMask);
+        var hit = Physics2D.OverlapCircle(p, 0.2f);
+        return hit != null && hit.CompareTag(obstacleTag);
     }
 
     bool TooClose(List<Vector2> used, Vector2 p)
     {
-        for (int i = 0; i < used.Count; i++)
-            if (Vector2.Distance(used[i], p) < avoidOthersRadius)
+        foreach (var u in used)
+            if (Vector2.Distance(u, p) < avoidOthersRadius)
                 return true;
         return false;
     }

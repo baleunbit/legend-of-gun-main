@@ -3455,7 +3455,7 @@ GameObject:
   - component: {fileID: 6115341954783068541}
   - component: {fileID: 2555245081796277518}
   m_Layer: 6
-  m_Name: Room 2
+  m_Name: TestRoom
   m_TagString: Room
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
