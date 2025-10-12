@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6103058179213788358}
   - component: {fileID: 554328646013451076}
   - component: {fileID: 3844197030982337548}
+  - component: {fileID: -4218107517917325442}
   m_Layer: 0
   m_Name: ChopStick
   m_TagString: Untagged
@@ -122,4 +123,18 @@ MonoBehaviour:
   fireRate: 0.25
   Damage: 5
   Pierce: 1
-  bulletPrefab: {fileID: 7270695959572244684}
+  bulletPrefab: {fileID: 2338185472800916295, guid: f19738c94d9c17c4c8cbc4b14c8265cd, type: 3}
+--- !u!114 &-4218107517917325442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7270695959572244684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4e066318c2ccd240afe3ad018efa9d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localOffset: {x: 0.72, y: 0.1}
+  localZRotation: -12.992

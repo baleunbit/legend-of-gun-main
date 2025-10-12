@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4390499025188796027}
   - component: {fileID: 7297922908577474718}
   - component: {fileID: 7975129052638841438}
+  - component: {fileID: 300136376892010918}
   m_Layer: 0
   m_Name: Spoon
   m_TagString: Untagged
@@ -122,4 +123,18 @@ MonoBehaviour:
   fireRate: 0.25
   Damage: 5
   Pierce: 1
-  bulletPrefab: {fileID: 8056019251577505871}
+  bulletPrefab: {fileID: 8410238058439440543, guid: b8ff9aea88a07424d84a0fc77abb183c, type: 3}
+--- !u!114 &300136376892010918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8056019251577505871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4e066318c2ccd240afe3ad018efa9d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localOffset: {x: 0.72, y: 0.1}
+  localZRotation: -12.992

@@ -1,33 +1,35 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
-public class WeaponSwitcher : MonoBehaviour
+public class WeaponSwitch : MonoBehaviour
 {
-    [Header("무기 프리팹 (0=포크, 1=숟가락, 2=젓가락)")]
-    public GameObject[] weaponPrefabs;
+    [Header("무기 프리팹 (0=Fork, 1=Spoon, 2=ChopStick)")]
+    [SerializeField] List<GameObject> weaponPrefabs;
 
-    [Header("장착 위치(소켓)")]
-    public Transform weaponSocket;          // Player 하위 WeaponSocket
-    [Header("크로스헤어")]
-    public Transform crosshair;             // Crosshair Transform
+    [Header("장착 위치(빈 GameObject)")]
+    [SerializeField] Transform weaponSocket;
 
-    [Header("입력 옵션")]
-    public int defaultIndex = 0;
-    public bool wrapAround = true;
-    public float switchCooldown = 0.2f;
+    [Header("입력/옵션")]
+    [SerializeField] bool wrapAround = true;
+    [SerializeField] float switchCooldown = 0.2f;
+    [SerializeField] int defaultIndex = 0;
+
+    [Header("참조(선택)")]
+    [SerializeField] Transform crosshair;
 
     int currentIndex = -1;
+    GameObject currentGO;
     float nextSwitchTime;
-
-    void Awake()
-    {
-        if (!weaponSocket) weaponSocket = transform;
-        // 혹시 플레이어 루트에 무기(Gun) 달린 애가 직접 붙어 있으면 제거(스크린샷 케이스)
-        PurgeStrayGunsOnPlayerRoot();
-    }
 
     void Start()
     {
-        TryEquip(defaultIndex);
+        if (!weaponSocket)
+        {
+            Debug.LogError("[WeaponSwitcher] WeaponSocket()이 필요합니다. 빈 오브젝트를 만들어 할당하세요.");
+            enabled = false; return;
+        }
+        // 시작 무기 장착
+        TryEquip(Mathf.Clamp(defaultIndex, 0, (weaponPrefabs?.Count ?? 1) - 1));
     }
 
     void Update()
@@ -45,75 +47,69 @@ public class WeaponSwitcher : MonoBehaviour
 
     public void Next()
     {
-        if (weaponPrefabs == null || weaponPrefabs.Length == 0) return;
-        int idx = currentIndex + 1;
-        if (idx >= weaponPrefabs.Length) idx = wrapAround ? 0 : weaponPrefabs.Length - 1;
-        TryEquip(idx);
+        int n = weaponPrefabs?.Count ?? 0;
+        if (n == 0) return;
+        int i = currentIndex + 1;
+        if (i >= n) i = wrapAround ? 0 : n - 1;
+        TryEquip(i);
     }
 
     public void Prev()
     {
-        if (weaponPrefabs == null || weaponPrefabs.Length == 0) return;
-        int idx = currentIndex - 1;
-        if (idx < 0) idx = wrapAround ? weaponPrefabs.Length - 1 : 0;
-        TryEquip(idx);
+        int n = weaponPrefabs?.Count ?? 0;
+        if (n == 0) return;
+        int i = currentIndex - 1;
+        if (i < 0) i = wrapAround ? n - 1 : 0;
+        TryEquip(i);
     }
 
-    public void TryEquip(int idx)
+    void TryEquip(int idx)
     {
-        if (weaponPrefabs == null || idx < 0 || idx >= weaponPrefabs.Length) return;
-        if (idx == currentIndex) { /*같은 무기면 재생성 안 함*/ return; }
+        if (weaponPrefabs == null || idx < 0 || idx >= weaponPrefabs.Count) return;
+        if (idx == currentIndex) return;
 
-        nextSwitchTime = Time.time + switchCooldown;
+        // 이전 무기 제거
+        if (currentGO) Destroy(currentGO);
 
-        // 1) 소켓 비우기(겹침 방지: 비활성화가 아니라 '파괴')
-        ClearSocket();
-
-        // 2) 새 무기 생성
         var prefab = weaponPrefabs[idx];
-        if (!prefab) return;
+        if (!prefab) { Debug.LogError("[WeaponSwitcher] 무기 프리팹이 비어있음"); return; }
 
-        var go = Instantiate(prefab, weaponSocket);
-        go.transform.localPosition = Vector3.zero;
-        go.transform.localRotation = Quaternion.identity;
-        go.transform.localScale = Vector3.one;
+        // 소켓의 정확한 로컬 기준으로 장착 (worldPositionStays=false 중요!)
+        currentGO = Instantiate(prefab);
+        currentGO.transform.SetParent(weaponSocket, false);
+        currentGO.transform.localPosition = Vector3.zero;
+        currentGO.transform.localRotation = Quaternion.identity;
+        currentGO.transform.localScale = Vector3.one;
+        currentGO.name = prefab.name; // 깔끔하게
 
         currentIndex = idx;
+        nextSwitchTime = Time.time + switchCooldown;
 
-        // 3) 크로스헤어 주입 + UI 갱신
-        var gun = go.GetComponent<Gun>();
-        if (gun)
+        // Gun 세팅
+        var gun = currentGO.GetComponent<Gun>();
+        if (!gun)
         {
-            if (!crosshair)
-            {
-                // 안전망: 태그나 이름으로 찾아서 세팅
-                crosshair = GameObject.FindWithTag("Crosshair")?.transform
-                         ?? GameObject.Find("Crosshair")?.transform;
-            }
-            gun.Crosshair = crosshair;
-            UIManager.Instance?.RegisterGun(gun);
+            Debug.LogError("[WeaponSwitcher] 프리팹에 Gun 컴포넌트가 없습니다.", currentGO);
+            return;
         }
-    }
+        if (!gun.Crosshair && crosshair) gun.Crosshair = crosshair;
 
-    void ClearSocket()
-    {
-        for (int i = weaponSocket.childCount - 1; i >= 0; i--)
-        {
-            var child = weaponSocket.GetChild(i);
-            if (Application.isPlaying) Destroy(child.gameObject);
-            else DestroyImmediate(child.gameObject);
-        }
-    }
+        // 탄 프리팹이 비어있으면 바로 알려줌 (이번에 뜬 에러의 원인)
+        if (!gun.HasBulletPrefab())
+            Debug.LogError($"[WeaponSwitcher] '{prefab.name}'의 Gun.bulletPrefab 미할당!");
 
-    void PurgeStrayGunsOnPlayerRoot()
-    {
-        // 소켓 바깥(플레이어 루트)에 붙어있는 Gun은 모두 제거
-        var guns = GetComponentsInChildren<Gun>(true);
-        foreach (var g in guns)
+        var mount = currentGO.GetComponent<WeaponMount>();
+        if (mount)
         {
-            if (weaponSocket && g.transform.IsChildOf(weaponSocket)) continue; // 소켓 아래는 놔둠
-            if (Application.isPlaying) Destroy(g.gameObject);
-            else DestroyImmediate(g.gameObject);
+            currentGO.transform.localPosition += (Vector3)mount.localOffset;
+            currentGO.transform.localRotation = Quaternion.Euler(
+                0, 0, currentGO.transform.localEulerAngles.z + mount.localZRotation
+            );
         }
+        UIManager.Instance?.UpdateWeaponIconFromPrefab(prefab);
+
+        // UI 갱신
+        UIManager.Instance?.RegisterGun(gun);
+        UIManager.Instance?.UpdateWeaponIcon(currentIndex);
     }
 }

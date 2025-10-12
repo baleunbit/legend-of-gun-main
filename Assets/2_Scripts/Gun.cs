@@ -23,6 +23,7 @@ public class Gun : MonoBehaviour
     float nextFireTime;
     Player player;
     bool deathHandled;
+    public bool HasBulletPrefab() => bulletPrefab != null;
 
     void Start()
     {
