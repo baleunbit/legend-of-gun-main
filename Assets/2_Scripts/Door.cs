@@ -8,7 +8,7 @@ public class Door : MonoBehaviour
     [SerializeField] private Transform player;
 
     [Header("문 동작")]
-    [SerializeField] private float activateDelay = 0.75f;   // 생성 직후 오동작 방지
+    [SerializeField] private float activateDelay = 0.75f;   // 생성 직후 오작동 방지
     [SerializeField] private float reenterCooldown = 0.4f;  // 연속 텔레포트 방지
     [SerializeField] private Vector2 exitOffset = new(0f, 0.75f);
 
@@ -22,8 +22,6 @@ public class Door : MonoBehaviour
 
     // 이 문이 속한 "최상위" Room (문 자신에 Room이 붙어있어도 부모 중 최상위로 고정)
     private Room ownerRoom;
-
-    // ─────────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -91,12 +89,13 @@ public class Door : MonoBehaviour
         var rb = player.GetComponent<Rigidbody2D>();
         if (rb) rb.linearVelocity = Vector2.zero;
 
+        // 진입하는 방의 스테이지 번호를 이름 접두사에서 추출하여 StageDirector에 전달
+        int stage = StageDirector.ParseStageFromName(nextRoomGO.name);
+        StageDirector.Instance.ApplyStage(stage, nextRoomGO, player.gameObject);
+
         // 재진입 방지 쿨다운
         requireExit = true;
         nextGlobalAllowedTime = Time.time + reenterCooldown;
-
-        // 문을 삭제/비활성화하지 않음 (요청대로)
-        // gameObject.SetActive(false);
     }
 
     private void OnTriggerExit2D(Collider2D other)
