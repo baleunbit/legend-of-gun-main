@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7182905681256237371}
   - component: {fileID: 660120096964825703}
-  - component: {fileID: 387605737508781275}
   - component: {fileID: 1858100624824932760}
   - component: {fileID: 9122596658563180991}
   - component: {fileID: 2102460730286926081}
@@ -33,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 64.97, y: -154.64, z: 0}
-  m_LocalScale: {x: 4, y: 4, z: 4}
+  m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -93,28 +92,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!95 &387605737508781275
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2080935063134399234}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 8c7845f2d3a629943afc1519da279300, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!50 &1858100624824932760
 Rigidbody2D:
   serializedVersion: 5
@@ -154,7 +131,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81900e89e79e0b143a26e2512d2c0d53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 22
+  Speed: 19
   minDamage: 3
   maxDamage: 5
   attackCooldown: 1
@@ -162,7 +139,7 @@ MonoBehaviour:
   viewDistance: 10
   fovAngle: 80
   target: {fileID: 0}
-  anim: {fileID: 387605737508781275}
+  anim: {fileID: 0}
   questionMark: {fileID: 0}
   exclamationMark: {fileID: 0}
   maxHP: 30

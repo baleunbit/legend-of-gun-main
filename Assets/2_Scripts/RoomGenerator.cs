@@ -8,10 +8,10 @@ public class RoomGenerator : MonoBehaviour
     public List<GameObject> roomPrefabs;
 
     [Header("스테이지 생성 규칙")]
-    public int startStage = 1;          // 시작 스테이지 번호
-    public int endStage = 2;            // 마지막 스테이지 번호(포함)
-    public int roomsPerStage = 5;       // 각 스테이지 일반방 개수
-    public string bossRoomExactName = "BossRoom";  // 보스 프리팹 이름의 접미사: 예) 1_BossRoom
+    public int startStage = 1;
+    public int endStage = 2;
+    public int roomsPerStage = 5;
+    public string bossRoomExactName = "BossRoom";
 
     [Header("배치 설정(기존 유지)")]
     public Vector2 padding = new(1f, 1f);
@@ -36,11 +36,10 @@ public class RoomGenerator : MonoBehaviour
 
     // ─────────────────────────────────────────────────────────────
 
-    void Start()
+    private void Start()
     {
         if (!Application.isPlaying) return;
 
-        // 프리팹 정리
         if (roomPrefabs == null) { Debug.LogError("[RoomGenerator] roomPrefabs가 null"); enabled = false; return; }
         roomPrefabs.RemoveAll(p => p == null);
         if (roomPrefabs.Count == 0) { Debug.LogError("[RoomGenerator] roomPrefabs 비어있음"); enabled = false; return; }
@@ -49,17 +48,12 @@ public class RoomGenerator : MonoBehaviour
         Room[] existing = FindObjectsByType<Room>(FindObjectsSortMode.None);
         foreach (var r in existing) _rooms.Add(BuildEntryFromInstance(r.gameObject));
 
-        // 시작 방 결정 (플레이어 위치 포함/가까운 방)
+        // 시작 방
         int startIdx = FindStartRoomIndex();
         if (startIdx < 0 && createStartRoomIfMissing)
         {
-            // 시작 스테이지 일반방 중 하나로 시작 방 생성
             var candidates = FilterStageNormals(startStage);
-            if (candidates.Count == 0)
-            {
-                // 전체 프리팹 중 아무거나
-                candidates = roomPrefabs.ToList();
-            }
+            if (candidates.Count == 0) candidates = roomPrefabs.ToList();
             var prefab = candidates[Random.Range(0, candidates.Count)];
             Vector3 pos = playerTransform ? playerTransform.position : Vector3.zero;
 
@@ -79,16 +73,12 @@ public class RoomGenerator : MonoBehaviour
 
         _chain.Add(startIdx);
 
-        // 체인 시작 기준점
+        // 체인 빌드
         var prev = _rooms[startIdx];
-
-        // 스테이지 루프
         for (int stage = startStage; stage <= endStage; stage++)
         {
-            // 1) 일반방 N개
             GenerateStageNormals(stage, roomsPerStage, ref prev);
 
-            // 2) 보스방 (있으면)
             var boss = FindBossPrefab(stage);
             if (boss)
             {
@@ -104,7 +94,7 @@ public class RoomGenerator : MonoBehaviour
 
     // ───────────────── Stage별 생성 ─────────────────
 
-    void GenerateStageNormals(int stage, int count, ref RoomEntry prev)
+    private void GenerateStageNormals(int stage, int count, ref RoomEntry prev)
     {
         var normals = FilterStageNormals(stage);
         if (normals.Count == 0)
@@ -120,7 +110,7 @@ public class RoomGenerator : MonoBehaviour
         }
     }
 
-    List<GameObject> FilterStageNormals(int stage)
+    private List<GameObject> FilterStageNormals(int stage)
     {
         string prefix = stage + "_";
         return roomPrefabs
@@ -128,21 +118,19 @@ public class RoomGenerator : MonoBehaviour
             .ToList();
     }
 
-    GameObject FindBossPrefab(int stage)
+    private GameObject FindBossPrefab(int stage)
     {
-        // 1) 정확히 "{stage}_BossRoom" 찾기
         string exact = $"{stage}_{bossRoomExactName}";
         var exactHit = roomPrefabs.FirstOrDefault(p => p && p.name == exact);
         if (exactHit) return exactHit;
 
-        // 2) "{stage}_Boss"로 시작하는 다른 이름을 허용(예: 1_BossRoomLarge 등)
         string prefix = $"{stage}_Boss";
         return roomPrefabs.FirstOrDefault(p => p && p.name.StartsWith(prefix));
     }
 
-    // ───────────── 공통 배치 로직(기존 알고리즘 유지) ─────────────
+    // ───────────── 공통 배치 로직 ─────────────
 
-    void TryPlaceRoom(GameObject prefab, ref RoomEntry prev)
+    private void TryPlaceRoom(GameObject prefab, ref RoomEntry prev)
     {
         if (!prefab) return;
 
@@ -172,7 +160,6 @@ public class RoomGenerator : MonoBehaviour
                 break;
             }
 
-            // 보정(기존 로직 유지)
             if (tries % 3 == 0) pos.y += Mathf.Max(0.5f, padding.y * 0.5f);
             else pos.x = baseX + Random.Range(-horizontalJitter, horizontalJitter);
 
@@ -183,9 +170,7 @@ public class RoomGenerator : MonoBehaviour
             Debug.Log($"[RoomGenerator] '{prefab.name}' 배치 실패");
     }
 
-    // ───────────── 기존 유틸 그대로 ─────────────
-
-    int FindStartRoomIndex()
+    private int FindStartRoomIndex()
     {
         if (_rooms.Count == 0) return -1;
         bool hasPlayer = playerTransform != null;
@@ -207,7 +192,7 @@ public class RoomGenerator : MonoBehaviour
         return 0;
     }
 
-    bool IsOverlappingWithAny(Vector2 newPos, Vector2 newHalf)
+    private bool IsOverlappingWithAny(Vector2 newPos, Vector2 newHalf)
     {
         foreach (var e in _rooms)
         {
@@ -221,7 +206,7 @@ public class RoomGenerator : MonoBehaviour
         return false;
     }
 
-    RoomEntry BuildEntryFromInstance(GameObject go)
+    private RoomEntry BuildEntryFromInstance(GameObject go)
     {
         Bounds? bounds = null;
 
@@ -253,7 +238,7 @@ public class RoomGenerator : MonoBehaviour
         };
     }
 
-    Vector2 ComputeHalfSizeFromPrefab(GameObject prefab)
+    private Vector2 ComputeHalfSizeFromPrefab(GameObject prefab)
     {
         GameObject temp = Instantiate(prefab, Vector3.zero, Quaternion.identity);
         temp.SetActive(true);
@@ -262,7 +247,8 @@ public class RoomGenerator : MonoBehaviour
         return entry.halfSize;
     }
 
-    // (선택) 문 이동용
+    // === 체인 조회 API ===
+
     public Vector2 GetNextRoomPositionByY(Vector2 fromPos, float epsilon = 0.1f)
     {
         float curY = fromPos.y;
@@ -288,5 +274,19 @@ public class RoomGenerator : MonoBehaviour
         int idx = _chain[chainIndex];
         if (idx < 0 || idx >= _rooms.Count) return null;
         return _rooms[idx].go;
+    }
+
+    // Door에서 호출: 주어진 Room이 체인에서 몇 번째인지
+    public int FindChainIndexByRoom(Room room)
+    {
+        if (!room) return -1;
+        for (int i = 0; i < _chain.Count; i++)
+        {
+            var go = GetChainedRoom(i);
+            var r = go ? go.GetComponent<Room>() : null;
+            if (r && ReferenceEquals(r, room))   // Room 컴포넌트 참조 동일성으로 비교
+                return i;
+        }
+        return -1;
     }
 }
