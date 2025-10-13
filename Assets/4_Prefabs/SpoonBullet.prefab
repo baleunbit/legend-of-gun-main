@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3148878733417989325}
   - component: {fileID: 996049796861902871}
   - component: {fileID: 7172507562498519600}
+  - component: {fileID: 8395700949021318187}
   m_Layer: 0
   m_Name: SpoonBullet
   m_TagString: Bullet
@@ -168,3 +169,17 @@ CapsuleCollider2D:
   m_Offset: {x: 0.0016256969, y: -0.048370205}
   m_Size: {x: 0.41810864, y: 1.8646206}
   m_Direction: 0
+--- !u!114 &8395700949021318187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8410238058439440543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f674dd6a05cf2cf45811a624652a7d34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponType: 0
+  alsoSendMessage: 1

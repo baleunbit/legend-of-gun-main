@@ -1705,6 +1705,7 @@ MonoBehaviour:
   enemyBaseHP: 30
   currentStage: 1
   mainWeapon: 0
+  currentWeapon: 0
 --- !u!1 &551469276
 GameObject:
   m_ObjectHideFlags: 0
@@ -3373,9 +3374,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07ed7c6e9b80b394298a93fa780263ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stage2SpeedScale: 0.6
-  stage3PlayerDrag: 0.2
-  stage4BurnDps: 4
+  stage2_TimeScale: 0.6
+  stage2_RigidbodyExtraDrag: 8
+  stage3_PlayerDrag: 0.05
+  stage3_PlayerAngularDrag: 0.05
+  stage4_BurnDps: 10
 --- !u!4 &1588544591
 Transform:
   m_ObjectHideFlags: 0

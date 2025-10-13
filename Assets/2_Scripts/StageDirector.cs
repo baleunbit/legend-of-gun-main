@@ -1,70 +1,97 @@
 // StageDirector.cs
-// - 스테이지 진입 시 주무기/데미지 규칙 적용
-// - 스테이지 2: 방 전체 느려짐(플레이어+몹)  ─ RoomSlowAll
-// - 스테이지 3: 얼음 미끄럼(플레이어만)     ─ PlayerStatusEffects(slippery)
-// - 스테이지 4: 화상 도트(플레이어)        ─ BurnDamageOverTime
-// - 프리팹 이름 "1_*", "2_*"… 접두사로 스테이지 판별
+// - 스테이지 진입 시 규칙/기믹을 적용(자동 부트스트랩 포함)
+// - Door에서 ApplyStage를 호출하는 구조 그대로 사용 가능
+// - 여긴 무기 타입 주입을 하지 않는다. PlayerLoadout만 갱신하면
+//   발사체는 ProjectileDamageAuto가 "현재 무기 데미지"를 자동 샘플링한다.
 
 using UnityEngine;
 
+[DefaultExecutionOrder(-200)]
 public class StageDirector : MonoBehaviour
 {
-    public static StageDirector Instance { get; private set; }
+    private static StageDirector _inst;
+    public static StageDirector Instance
+    {
+        get
+        {
+            if (_inst) return _inst;
+            _inst = FindFirstObjectByType<StageDirector>(FindObjectsInactive.Include);
+            if (_inst) return _inst;
+            var go = new GameObject("StageDirector");
+            _inst = go.AddComponent<StageDirector>();
+            return _inst;
+        }
+    }
 
-    [Header("기믹 기본값")]
-    [SerializeField, Range(0.1f, 1f)] private float stage2SpeedScale = 0.6f; // 1=정상, 0.6=40%감속
-    [SerializeField] private float stage3PlayerDrag = 0.2f;                  // 미끄럼 시 플레이어 rb.drag
-    [SerializeField] private float stage4BurnDps = 4f;                        // 초당 화상 데미지
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetDomain() { _inst = null; }
+
+    [Header("2스테 감속(강하게 체감)")]
+    [Range(0.1f, 1f)] public float stage2_TimeScale = 0.6f;
+    public float stage2_RigidbodyExtraDrag = 8f;
+
+    [Header("3스테 미끄럼")]
+    public float stage3_PlayerDrag = 0.05f;
+    public float stage3_PlayerAngularDrag = 0.05f;
+
+    [Header("4스테 화상")]
+    public float stage4_BurnDps = 10f;
 
     public int CurrentStage { get; private set; } = 1;
 
     void Awake()
     {
-        if (Instance && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (_inst && _inst != this) { Destroy(gameObject); return; }
+        _inst = this;
         DontDestroyOnLoad(gameObject);
     }
 
-    public void ApplyStage(int stage, GameObject enteredRoom, GameObject playerGO)
+    void Start()
+    {
+        // 시작 방 규칙 자동 적용
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (!player) return;
+        var room = FindRoomByPosition(player.transform.position);
+        if (!room) return;
+        ApplyStage(ParseStageFromName(room.gameObject.name), room.gameObject, player);
+    }
+
+    public void ApplyStage(int stage, GameObject roomGO, GameObject playerGO)
     {
         if (stage <= 0) stage = 1;
         CurrentStage = stage;
 
-        // 1) 무기/데미지 규칙
+        // 무기/타수 규칙
         var loadout = playerGO.GetComponent<PlayerLoadout>();
         if (loadout) loadout.ApplyStageRules(stage);
 
-        // 플레이어 상태 컴포넌트 확보
+        // 공통 리셋
+        Time.timeScale = 1f;
         var status = playerGO.GetComponent<PlayerStatusEffects>();
         if (!status) status = playerGO.AddComponent<PlayerStatusEffects>();
+        status.ClearAll();
+        DisableIfExists<RoomSlowAll>(roomGO);
+        DisableIfExists<BurnDamageOverTime>(roomGO);
 
-        // 방 기믹 리셋
-        var slow = enteredRoom.GetComponent<RoomSlowAll>();
-        var burn = enteredRoom.GetComponent<BurnDamageOverTime>();
-        if (slow) slow.enabled = false;
-        if (burn) burn.enabled = false;
-        status.SetSlippery(false, 0f);
-
-        // 2) 스테이지별 기믹
+        // 스테이지 기믹
         switch (stage)
         {
-            case 1:
-                // 기믹 없음
-                break;
+            case 1: break;
 
-            case 2: // 전체 이속 감소(플레이어+몹)
-                slow = Ensure<RoomSlowAll>(enteredRoom);
-                slow.Init(stage2SpeedScale);
+            case 2:
+                Time.timeScale = stage2_TimeScale;
+                var slow = roomGO.GetComponent<RoomSlowAll>() ?? roomGO.AddComponent<RoomSlowAll>();
+                slow.Init(stage2_RigidbodyExtraDrag);
                 slow.enabled = true;
                 break;
 
-            case 3: // 얼음: 플레이어 미끄럼
-                status.SetSlippery(true, stage3PlayerDrag);
+            case 3:
+                status.SetSlippery(true, stage3_PlayerDrag, stage3_PlayerAngularDrag);
                 break;
 
-            case 4: // 화상: 플레이어 DoT
-                burn = Ensure<BurnDamageOverTime>(enteredRoom);
-                burn.Init(playerGO.transform, stage4BurnDps);
+            case 4:
+                var burn = roomGO.GetComponent<BurnDamageOverTime>() ?? roomGO.AddComponent<BurnDamageOverTime>();
+                burn.Init(playerGO.transform, stage4_BurnDps);
                 burn.enabled = true;
                 break;
         }
@@ -74,13 +101,32 @@ public class StageDirector : MonoBehaviour
     {
         if (string.IsNullOrEmpty(roomName)) return 1;
         int us = roomName.IndexOf('_');
-        string head = us > 0 ? roomName.Substring(0, us) : roomName;
+        string head = us > 0 ? roomName[..us] : roomName;
         return int.TryParse(head, out int s) ? s : 1;
     }
 
-    private T Ensure<T>(GameObject host) where T : Component
+    private void DisableIfExists<T>(GameObject host) where T : Behaviour
     {
         var c = host.GetComponent<T>();
-        return c ? c : host.AddComponent<T>();
+        if (c) c.enabled = false;
+    }
+
+    private Room FindRoomByPosition(Vector2 pos)
+    {
+        var rooms = FindObjectsByType<Room>(FindObjectsSortMode.None);
+        Room best = null;
+        float bestDist = float.MaxValue;
+
+        foreach (var r in rooms)
+        {
+            if (!r) continue;
+            var cols = r.GetComponentsInChildren<Collider2D>(true);
+            foreach (var c in cols)
+                if (c && c.OverlapPoint(pos)) return r;
+
+            float d = ((Vector2)r.transform.position - pos).sqrMagnitude;
+            if (d < bestDist) { bestDist = d; best = r; }
+        }
+        return best;
     }
 }

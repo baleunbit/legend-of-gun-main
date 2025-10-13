@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Door.cs
+// - 다음 방 이동 + 스테이지 적용 호출(강제 보장)
+
+using UnityEngine;
 
 [DisallowMultipleComponent]
 public class Door : MonoBehaviour
@@ -8,8 +11,8 @@ public class Door : MonoBehaviour
     [SerializeField] private Transform player;
 
     [Header("문 동작")]
-    [SerializeField] private float activateDelay = 0.75f;   // 생성 직후 오작동 방지
-    [SerializeField] private float reenterCooldown = 0.4f;  // 연속 텔레포트 방지
+    [SerializeField] private float activateDelay = 0.75f;
+    [SerializeField] private float reenterCooldown = 0.4f;
     [SerializeField] private Vector2 exitOffset = new(0f, 0.75f);
 
     [Header("조건")]
@@ -20,10 +23,9 @@ public class Door : MonoBehaviour
     private bool requireExit;
     private static float nextGlobalAllowedTime = 0f;
 
-    // 이 문이 속한 "최상위" Room (문 자신에 Room이 붙어있어도 부모 중 최상위로 고정)
     private Room ownerRoom;
 
-    private void Awake()
+    void Awake()
     {
         startTime = Time.time;
 
@@ -33,94 +35,64 @@ public class Door : MonoBehaviour
             if (p) player = p.transform;
         }
         if (!generator) generator = FindFirstObjectByType<RoomGenerator>();
-
         ownerRoom = FindTopmostParentRoom(transform);
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("Player")) return;
         if (!player || !generator) return;
 
-        // 초기 지연/쿨다운/Exit 대기
         if (Time.time - startTime < activateDelay) return;
         if (Time.time < nextGlobalAllowedTime) return;
         if (requireExit) return;
 
-        // 현재 방 결정: 최상위 부모 Room 우선, 없으면 플레이어 위치로 탐색
-        Room currentRoom = ownerRoom != null ? ownerRoom : FindRoomByPosition(player.position);
+        Room currentRoom = ownerRoom ? ownerRoom : FindRoomByPosition(player.position);
         if (!currentRoom) return;
 
-        // 방 전멸 조건
         if (requireClearRoom && HasAliveMobs(currentRoom))
         {
             Debug.Log(blockedMessage);
             return;
         }
 
-        // 체인에서 현재 방 인덱스 찾기
         int curIndex = generator.FindChainIndexByRoom(currentRoom);
-        if (curIndex < 0)
-        {
-            Debug.LogWarning("[Door] 현재 방 인덱스를 찾지 못함");
-            return;
-        }
+        if (curIndex < 0) return;
 
-        // 다음 방
         GameObject nextRoomGO = generator.GetChainedRoom(curIndex + 1);
-        if (!nextRoomGO)
-        {
-            Debug.Log("[Door] 다음 방이 없습니다 (마지막 방)");
-            return;
-        }
+        if (!nextRoomGO) return;
 
         Room nextRoom = nextRoomGO.GetComponent<Room>();
-        if (nextRoom == currentRoom)
-        {
-            // 자기 자신을 다음 방으로 잘못 인식했을 때 보호
-            Debug.Log("[Door] next == current (이동 취소)");
-            return;
-        }
+        if (nextRoom == currentRoom) return;
 
-        // === 이동 처리 ===
-        Vector3 target = nextRoomGO.transform.position + (Vector3)exitOffset;
-        player.position = target;
-
+        player.position = nextRoomGO.transform.position + (Vector3)exitOffset;
         var rb = player.GetComponent<Rigidbody2D>();
         if (rb) rb.linearVelocity = Vector2.zero;
 
-        // 진입하는 방의 스테이지 번호를 이름 접두사에서 추출하여 StageDirector에 전달
         int stage = StageDirector.ParseStageFromName(nextRoomGO.name);
         StageDirector.Instance.ApplyStage(stage, nextRoomGO, player.gameObject);
 
-        // 재진입 방지 쿨다운
         requireExit = true;
         nextGlobalAllowedTime = Time.time + reenterCooldown;
     }
 
-    private void OnTriggerExit2D(Collider2D other)
+    void OnTriggerExit2D(Collider2D other)
     {
         if (!other.CompareTag("Player")) return;
         requireExit = false;
     }
 
-    // ───────────────── 유틸 ─────────────────
-
-    // 부모 계층에서 "최상위" Room을 찾는다 (문 자신에 Room이 붙어있어도 루트 Room으로 고정)
     private Room FindTopmostParentRoom(Transform t)
     {
         Room found = null;
-        Transform cur = t;
-        while (cur != null)
+        for (var cur = t; cur != null; cur = cur.parent)
         {
             var r = cur.GetComponent<Room>();
-            if (r) found = r;       // 더 위로 올라가며 갱신 → 최상위가 남음
-            cur = cur.parent;
+            if (r) found = r;
         }
         return found;
     }
 
-    // 플레이어 위치 기준 방 탐색 (콜라이더 포함 확인 → 없으면 가장 가까운 방)
     private Room FindRoomByPosition(Vector2 pos)
     {
         var rooms = FindObjectsByType<Room>(FindObjectsSortMode.None);
@@ -133,10 +105,7 @@ public class Door : MonoBehaviour
 
             var cols = r.GetComponentsInChildren<Collider2D>(true);
             foreach (var c in cols)
-            {
-                if (c && c.OverlapPoint(pos))
-                    return r;
-            }
+                if (c && c.OverlapPoint(pos)) return r;
 
             float d = ((Vector2)r.transform.position - pos).sqrMagnitude;
             if (d < bestDist) { bestDist = d; best = r; }
@@ -144,7 +113,6 @@ public class Door : MonoBehaviour
         return best;
     }
 
-    // 방 내에 살아있는 몹이 남았는지 체크
     private bool HasAliveMobs(Room room)
     {
         var mobs = room.GetComponentsInChildren<Mob>(true);
