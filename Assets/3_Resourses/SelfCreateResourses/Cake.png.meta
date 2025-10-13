@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3acbed4814d5b3a4f9b807d717cc1f83
+guid: c0ff8a828b08e4546b9b58f2033a9da5
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 407911982083373505
-    second: flipped_output_0
+      213: -6794305457321429515
+    second: Cake_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: flipped_output_0
+      name: Cake_0
       rect:
         serializedVersion: 2
         x: 31
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1c974b759c139a500800000000000000
-      internalID: 407911982083373505
+      spriteID: 5f5bbd03f27c5b1a0800000000000000
+      internalID: -6794305457321429515
       vertices: []
       indices: 
       edges: []
@@ -147,8 +147,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      flipped_output_0: 407911982083373505
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

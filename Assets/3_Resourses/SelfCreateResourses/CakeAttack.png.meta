@@ -1,22 +1,22 @@
 fileFormatVersion: 2
-guid: 3eaef3444d2c22f4b8b156d1a6823324
+guid: f447c9cd0be58c74681e737672d63448
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -39573355309517892
-    second: flipped_output_sprite_0
+      213: -750567172590261482
+    second: CakeAttack_0
   - first:
-      213: -8486481771347038004
-    second: flipped_output_sprite_1
+      213: 7431622298422558966
+    second: CakeAttack_1
   - first:
-      213: -8763866697713582442
-    second: flipped_output_sprite_2
+      213: -7012212066219835435
+    second: CakeAttack_2
   - first:
-      213: -5096966315767831068
-    second: flipped_output_sprite_3
+      213: 1451977404734495841
+    second: CakeAttack_3
   - first:
-      213: -7196004252289997280
-    second: flipped_output_sprite_4
+      213: -4455707980347182228
+    second: CakeAttack_4
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -125,13 +125,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: flipped_output_sprite_0
+      name: CakeAttack_0
       rect:
         serializedVersion: 2
-        x: 1035
-        y: 43
-        width: 163
-        height: 150
+        x: 15
+        y: 55
+        width: 203
+        height: 186
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -140,20 +140,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: cb3b4363e38637ff0800000000000000
-      internalID: -39573355309517892
+      spriteID: 61b20b912237595f0800000000000000
+      internalID: -750567172590261482
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: flipped_output_sprite_1
+      name: CakeAttack_1
       rect:
         serializedVersion: 2
-        x: 1253
-        y: 43
-        width: 150
-        height: 150
+        x: 287
+        y: 55
+        width: 187
+        height: 186
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -162,20 +162,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: cc03802dac5f93a80800000000000000
-      internalID: -8486481771347038004
+      spriteID: 6f049522b1d622760800000000000000
+      internalID: 7431622298422558966
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: flipped_output_sprite_2
+      name: CakeAttack_2
       rect:
         serializedVersion: 2
-        x: 1458
-        y: 43
-        width: 150
-        height: 143
+        x: 543
+        y: 55
+        width: 187
+        height: 178
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -184,20 +184,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 69ef7efdbad706680800000000000000
-      internalID: -8763866697713582442
+      spriteID: 5df324f274e9fae90800000000000000
+      internalID: -7012212066219835435
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: flipped_output_sprite_3
+      name: CakeAttack_3
       rect:
         serializedVersion: 2
-        x: 1663
-        y: 43
-        width: 150
-        height: 143
+        x: 799
+        y: 55
+        width: 187
+        height: 178
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -206,20 +206,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4e5e6840420f349b0800000000000000
-      internalID: -5096966315767831068
+      spriteID: 16cd717b1c5762410800000000000000
+      internalID: 1451977404734495841
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: flipped_output_sprite_4
+      name: CakeAttack_4
       rect:
         serializedVersion: 2
-        x: 1867
-        y: 43
-        width: 150
-        height: 143
+        x: 1055
+        y: 55
+        width: 187
+        height: 178
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -228,8 +228,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 026ed043248a22c90800000000000000
-      internalID: -7196004252289997280
+      spriteID: c63788003352a22c0800000000000000
+      internalID: -4455707980347182228
       vertices: []
       indices: 
       edges: []
