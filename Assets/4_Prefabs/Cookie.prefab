@@ -135,8 +135,8 @@ MonoBehaviour:
   minDamage: 3
   maxDamage: 5
   attackCooldown: 1
-  detectRadius: 12
-  viewDistance: 12
+  detectRadius: 15
+  viewDistance: 15
   fovAngle: 80
   target: {fileID: 0}
   anim: {fileID: 0}
