@@ -1,5 +1,4 @@
-﻿// 파일: UIManager.cs
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
@@ -14,9 +13,8 @@ public class UIManager : MonoBehaviour
     [Header("Reload UI")]
     [SerializeField] private GameObject reloadCircle;
 
-    [Header("Weapon Icon (0=Fork, 1=Spoon, 2=Chopsticks)")]
-    [SerializeField] private Image weaponIcon;          // 우하단 아이콘 Image
-    [SerializeField] private Sprite[] weaponIcons;      // 순서대로 아이콘 스프라이트 넣기
+    [Header("Weapon Icons (0=Fork, 1=Spoon, 2=Chopstick)")]
+    [SerializeField] private GameObject[] weaponIconObjs; // 캔버스에 있는 3개를 순서대로 드래그
 
     [Header("Died UI")]
     [SerializeField] private GameObject diedPanel;
@@ -27,7 +25,7 @@ public class UIManager : MonoBehaviour
     void Awake()
     {
         if (Instance == null) Instance = this;
-        else if (Instance != this) { Destroy(gameObject); return; }
+        else { Destroy(gameObject); return; }
 
         if (diedPanel) diedPanel.SetActive(false);
         if (restartButton)
@@ -35,22 +33,18 @@ public class UIManager : MonoBehaviour
             restartButton.onClick.RemoveAllListeners();
             restartButton.onClick.AddListener(Restart);
         }
+
         HideReloadCircle();
+        // 아이콘 초기화: 전부 끄기
+        SetWeaponIconActive(-1);
     }
 
-    // ── HUD ─────────────────────────────────────────────
+    // ====== 공개 API ======
+
     public void UpdateAmmoText(int current, int max)
     {
         if (!AmmoText) return;
         AmmoText.text = (current < 0) ? $"∞ / {max}" : $"{current} / {max}";
-    }
-
-    public void UpdateWeaponIconFromPrefab(GameObject weaponPrefab)
-    {
-        if (!weaponIcon) return;
-        var sr = weaponPrefab ? weaponPrefab.GetComponentInChildren<SpriteRenderer>() : null;
-        weaponIcon.sprite = sr ? sr.sprite : null;
-        weaponIcon.enabled = weaponIcon.sprite != null;
     }
 
     public void RegisterGun(Gun gun)
@@ -63,41 +57,16 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // ── Reload UI ───────────────────────────────────────
     public void ShowReloadCircle() { if (reloadCircle) reloadCircle.SetActive(true); }
     public void HideReloadCircle() { if (reloadCircle) reloadCircle.SetActive(false); }
 
-    // ── Weapon Icon ─────────────────────────────────────
-    // WeaponSwitcher에서 index(0/1/2)로 호출하는 용
-    public void UpdateWeaponIcon(int index)
+    public void SetWeaponIconActive(int index)
     {
-        if (!weaponIcon) return;
-
-        if (weaponIcons != null && index >= 0 && index < weaponIcons.Length && weaponIcons[index] != null)
-        {
-            weaponIcon.sprite = weaponIcons[index];
-            weaponIcon.enabled = true;
-        }
-        else
-        {
-            // 설정이 비었으면 아이콘 숨김
-            weaponIcon.enabled = false;
-        }
+        if (weaponIconObjs == null) return;
+        for (int i = 0; i < weaponIconObjs.Length; i++)
+            if (weaponIconObjs[i]) weaponIconObjs[i].SetActive(i == index);
     }
 
-    // 혹시 프리팹에 아이콘 스프라이트가 달려있어 직접 넘길 때 쓰는 오버로드
-    public void UpdateWeaponIcon(Sprite sprite)
-    {
-        if (!weaponIcon) return;
-        if (sprite != null)
-        {
-            weaponIcon.sprite = sprite;
-            weaponIcon.enabled = true;
-        }
-        else weaponIcon.enabled = false;
-    }
-
-    // ── Died Panel ──────────────────────────────────────
     public void ShowDiedPanel()
     {
         if (!diedPanel) return;
@@ -112,7 +81,6 @@ public class UIManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
-        var cur = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(cur.buildIndex);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

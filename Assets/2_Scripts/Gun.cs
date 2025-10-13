@@ -5,7 +5,7 @@ public class Gun : MonoBehaviour
 {
     public Transform Crosshair;
 
-    [Header("탄창")]
+    [Header("탄창(개별 모드용 표시값)")]
     public int maxAmmo = 6;
     public float reloadTime = 2f;
 
@@ -18,12 +18,25 @@ public class Gun : MonoBehaviour
 
     [SerializeField] GameObject bulletPrefab;
 
-    int currentAmmo;
+    // ✅ 공용 탄약이 있으면 그걸 우선 사용 (없으면 개별 currentAmmo 사용)
+    [SerializeField] SharedAmmo sharedAmmo;
+
+    int currentAmmo;   // 공용이 없을 때만 사용
     bool isReloading;
     float nextFireTime;
     Player player;
     bool deathHandled;
     public bool HasBulletPrefab() => bulletPrefab != null;
+    bool ammoInitialized = false;
+
+    void Awake()
+    {
+        // 개별 모드 보호용 기본값
+        currentAmmo = maxAmmo;
+
+        // 공용 탄약 자동 탐색(인스펙터에 안 꽂아도 동작)
+        if (!sharedAmmo) sharedAmmo = FindObjectOfType<SharedAmmo>();
+    }
 
     void Start()
     {
@@ -35,18 +48,35 @@ public class Gun : MonoBehaviour
         var pObj = GameObject.FindGameObjectWithTag("Player");
         if (pObj) player = pObj.GetComponent<Player>();
 
-        currentAmmo = maxAmmo;
         nextFireTime = 0f;
 
-        UIManager.Instance?.UpdateAmmoText(currentAmmo, maxAmmo);
+        // ⚠️ currentAmmo = maxAmmo; 절대 덮어쓰지 말 것(전환/공용탄약 유지)
+        UIManager.Instance?.UpdateAmmoText(GetDisplayAmmo(), GetDisplayMax());
         UIManager.Instance?.RegisterGun(this);
     }
 
     void OnDisable()
     {
-        // 총이 파괴/비활성 될 때 리로드 UI가 남지 않게 안전망
         UIManager.Instance?.HideReloadCircle();
     }
+
+    // ───────── 공용/표시 헬퍼 ─────────
+    int GetDisplayAmmo() => sharedAmmo ? sharedAmmo.currentAmmo : currentAmmo;
+    int GetDisplayMax() => sharedAmmo ? sharedAmmo.maxAmmo : maxAmmo;
+
+    public void SetCurrentAmmo(int value)
+    {
+        if (sharedAmmo)
+            sharedAmmo.currentAmmo = Mathf.Clamp(value, 0, sharedAmmo.maxAmmo);
+        else
+            currentAmmo = Mathf.Clamp(value, 0, maxAmmo);
+
+        ammoInitialized = true;
+        UIManager.Instance?.UpdateAmmoText(GetDisplayAmmo(), GetDisplayMax());
+    }
+
+    // UIManager가 읽어갈 때 씀(공용이면 공용 값)
+    public int GetCurrentAmmo() => GetDisplayAmmo();
 
     void Update()
     {
@@ -64,7 +94,8 @@ public class Gun : MonoBehaviour
 
         if (isReloading) return;
 
-        if (Input.GetKeyDown(KeyCode.R) && currentAmmo < maxAmmo)
+        // 공용/개별 기준으로 판정
+        if (Input.GetKeyDown(KeyCode.R) && GetDisplayAmmo() < GetDisplayMax())
         {
             StartCoroutine(Reload());
             return;
@@ -72,7 +103,7 @@ public class Gun : MonoBehaviour
 
         if (Input.GetMouseButton(0) && Time.time >= nextFireTime)
         {
-            if (currentAmmo > 0)
+            if (GetDisplayAmmo() > 0)
             {
                 Fire();
                 nextFireTime = Time.time + fireRate;
@@ -87,24 +118,36 @@ public class Gun : MonoBehaviour
     IEnumerator Reload()
     {
         if (isReloading) yield break;
-        if (currentAmmo >= maxAmmo) yield break;
+        if (GetDisplayAmmo() >= GetDisplayMax()) yield break;
 
         isReloading = true;
-        UIManager.Instance?.ShowReloadCircle();   // ✅ 켜기
+        UIManager.Instance?.ShowReloadCircle();
 
         yield return new WaitForSeconds(reloadTime);
 
-        currentAmmo = maxAmmo;
-        UIManager.Instance?.UpdateAmmoText(currentAmmo, maxAmmo);
+        if (sharedAmmo) sharedAmmo.Refill();
+        else currentAmmo = maxAmmo;
 
-        UIManager.Instance?.HideReloadCircle();   // ✅ 끄기
+        UIManager.Instance?.UpdateAmmoText(GetDisplayAmmo(), GetDisplayMax());
+        UIManager.Instance?.HideReloadCircle();
         isReloading = false;
     }
 
     void Fire()
     {
-        currentAmmo--;
-        UIManager.Instance?.UpdateAmmoText(currentAmmo, maxAmmo);
+        // ✅ 공용 탄약 우선 차감
+        bool consumed = false;
+        if (sharedAmmo)
+        {
+            consumed = sharedAmmo.TryConsume(1);
+        }
+        else
+        {
+            if (currentAmmo > 0) { currentAmmo--; consumed = true; }
+        }
+        if (!consumed) return;
+
+        UIManager.Instance?.UpdateAmmoText(GetDisplayAmmo(), GetDisplayMax());
 
         // 크로스헤어 안전망
         if (!Crosshair)
@@ -155,7 +198,4 @@ public class Gun : MonoBehaviour
         }
         return r;
     }
-
-    // UIManager가 읽어갈 때 씀
-    public int GetCurrentAmmo() => currentAmmo;
 }
