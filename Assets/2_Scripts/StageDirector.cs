@@ -62,8 +62,8 @@ public class StageDirector : MonoBehaviour
         CurrentStage = stage;
 
         // 무기/타수 규칙
-        var loadout = playerGO.GetComponent<PlayerLoadout>();
-        if (loadout) loadout.ApplyStageRules(stage);
+        var wm = playerGO.GetComponent<WeaponManager>();
+        if (wm) wm.ApplyStageRules(stage);
 
         // 공통 리셋
         Time.timeScale = 1f;

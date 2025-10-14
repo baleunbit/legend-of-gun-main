@@ -14,7 +14,6 @@ public class Player : MonoBehaviour
     [Header("UI")]
     public Image healthBarImage;  // Filled Image
 
-    // 외부에서 읽기/구독용
     public bool IsDead => isDead;
     public event Action Died;
 
@@ -23,7 +22,6 @@ public class Player : MonoBehaviour
     Animator ani;
     Rigidbody2D rb;
     bool isDead = false;
-    float mobDamageTimer = 0f;
 
     void Start()
     {
@@ -47,34 +45,16 @@ public class Player : MonoBehaviour
         rb.linearVelocity = input * moveSpeed;
     }
 
-    private void LateUpdate()
+    void LateUpdate()
     {
-        // before: ani.SetFloat("Speed", rb.linearVelocity.magnitude);
-        // 입력 기반: 내가 안 움직이면(입력 0) 항상 Idle
-        ani.SetFloat("Speed", input.sqrMagnitude);
-
+        // 입력 기준 애니/플립
+        ani?.SetFloat("Speed", input.sqrMagnitude);
         if (input.x > 0) spriter.flipX = false;
         else if (input.x < 0) spriter.flipX = true;
     }
 
-
-    void OnCollisionStay2D(Collision2D collision)
-    {
-        if (isDead) return;
-        if (collision.collider.CompareTag("Mob"))
-        {
-            mobDamageTimer += Time.fixedDeltaTime;
-            if (mobDamageTimer >= 1f)
-            {
-                TakeDamage(5);
-                mobDamageTimer = 0f;
-            }
-        }
-    }
-    void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.collider.CompareTag("Mob")) mobDamageTimer = 0f;
-    }
+    // ❌ (중복 피해 방지) 몹과의 충돌 도트데미지는 제거.
+    //    적의 피해는 Mob.TryAttack()에서만 들어오게 한다.
 
     public void TakeDamage(int damage)
     {
@@ -95,7 +75,7 @@ public class Player : MonoBehaviour
         isDead = true;
         rb.linearVelocity = Vector2.zero;
         ani?.SetTrigger("Dead");
-        Died?.Invoke();                 // 총 등에게 알림
+        Died?.Invoke();
         Debug.Log("플레이어 사망");
     }
 }

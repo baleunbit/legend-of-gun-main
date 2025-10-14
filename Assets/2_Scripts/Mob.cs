@@ -11,10 +11,18 @@ public class Mob : MonoBehaviour
     public int maxDamage = 5;
     public float attackCooldown = 1f;
 
-    [Header("탐지")]
-    public float detectRadius = 4f;
-    public float viewDistance = 6f;
-    [Range(0, 180)] public float fovAngle = 80f;
+    [Header("탐지-설정")]
+    public bool useSight = true;                 // 시야(부채꼴)로도 발각할지
+    public bool useProximityDwell = true;        // 파란원 안 머무르면 발각할지
+    public float detectRadius = 4f;              // 파란 원 반경(근접)
+    public float ringAlertTime = 0.6f;           // 근접 링 안 '머무른 시간' 후 발각
+    public float viewDistance = 6f;              // 시야 거리
+    [Range(0, 180)] public float fovAngle = 80f;  // 시야 각
+    public float loseSightDelay = 0.8f;          // 시야 놓친 뒤 Idle로 돌아갈 버퍼(원하면 사용)
+
+    [Header("시야 차단(선택)")]
+    public Transform eye;                        // 레이 발사 원점(없으면 본체)
+    public LayerMask obstacleMask;               // 차단 레이어(비워두면 태그 "GameObject" 폴백)
 
     [Header("참조")]
     public Rigidbody2D target;
@@ -30,9 +38,12 @@ public class Mob : MonoBehaviour
     public bool IsAlerted => hasSpotted;
     public bool IsAlive => isLive;
 
+    // ─────────────────────────────────────────────
+
     int currentHP;
     bool isLive = true;
     bool hasSpotted = false;
+
     float nextAttackTime = 0f;
     bool dealtThisFixed = false;
 
@@ -41,6 +52,10 @@ public class Mob : MonoBehaviour
 
     int hashIsWalk, Attack;
     Vector2 prevPos;
+
+    // 근접 머무름 타이머 + 시야 끊김 버퍼
+    float proximityTimer = 0f;
+    float lastSeenTime = -999f;
 
     void Awake()
     {
@@ -73,6 +88,7 @@ public class Mob : MonoBehaviour
     void FixedUpdate()
     {
         dealtThisFixed = false;
+
         if (!isLive || !target)
         {
             rb.linearVelocity = Vector2.zero;
@@ -81,24 +97,69 @@ public class Mob : MonoBehaviour
             return;
         }
 
+        // ── 발각 전 단계: 감지 로직
         if (!hasSpotted)
         {
-            float sqr = (target.position - rb.position).sqrMagnitude;
-            bool inProximity = sqr <= detectRadius * detectRadius;
-            bool inFov = InFovAndVisible();
+            bool becameAlert = false;
 
-            if (inFov) SetAlerted();
-            else { ShowQuestion(inProximity); ShowAlert(false); }
-
-            if (!hasSpotted)
+            // 1) 근접 링 안 머무름 판정
+            if (useProximityDwell)
             {
+                float sqr = (target.position - rb.position).sqrMagnitude;
+                bool inProximity = sqr <= detectRadius * detectRadius;
+                if (inProximity) proximityTimer += Time.fixedDeltaTime;
+                else proximityTimer = 0f;
+
+                if (proximityTimer >= ringAlertTime)
+                    becameAlert = true;
+
+                // 표식 업데이트
+                ShowQuestion(inProximity && !becameAlert);
+                ShowAlert(false);
+            }
+
+            // 2) 시야 판정(보이는 즉시 발각)
+            if (!becameAlert && useSight)
+            {
+                if (InFovAndVisible())
+                {
+                    becameAlert = true;
+                    lastSeenTime = Time.time;
+                }
+            }
+
+            if (becameAlert)
+            {
+                SetAlerted();
+            }
+            else
+            {
+                // 아직 발각 전이면 정지
                 rb.linearVelocity = Vector2.zero;
                 if (anim) anim.SetBool(hashIsWalk, false);
                 prevPos = rb.position;
                 return;
             }
         }
+        else
+        {
+            // 선택: 시야를 완전히 잃고 loseSightDelay가 지나면 Idle로 복귀 (원치 않으면 주석)
+            if (useSight && loseSightDelay > 0f)
+            {
+                if (InFovAndVisible()) lastSeenTime = Time.time;
+                else if (Time.time - lastSeenTime > loseSightDelay)
+                {
+                    hasSpotted = false;
+                    ShowAlert(false);
+                    ShowQuestion(false);
+                    rb.linearVelocity = Vector2.zero;
+                    if (anim) anim.SetBool(hashIsWalk, false);
+                    return;
+                }
+            }
+        }
 
+        // ── 추격 이동
         Vector2 cur = rb.position;
         Vector2 dir = ((Vector2)target.position - cur).normalized;
         rb.MovePosition(cur + dir * Speed * Time.fixedDeltaTime);
@@ -134,21 +195,33 @@ public class Mob : MonoBehaviour
         dealtThisFixed = true;
     }
 
+    // ─────────────────────────────────────────────
+
     bool InFovAndVisible()
     {
-        Vector2 myPos = rb.position;
-        Vector2 to = target.position - myPos;
+        Vector2 origin = eye ? (Vector2)eye.position : rb.position;
+        Vector2 to = target.position - origin;
         float dist = to.magnitude;
 
         if (dist > viewDistance) return false;
 
+        // 전방 벡터(스프라이트 기준)
         Vector2 forward = (sr && sr.flipX) ? Vector2.left : Vector2.right;
         float ang = Vector2.Angle(forward, to.normalized);
         if (ang > (fovAngle * 0.5f)) return false;
 
-        var hit = Physics2D.Linecast(myPos, target.position);
-        if (hit.collider != null && hit.collider.CompareTag("GameObject"))
-            return false;
+        // 가시선 차단
+        if (obstacleMask.value != 0)
+        {
+            var hit = Physics2D.Raycast(origin, to.normalized, dist, obstacleMask);
+            if (hit.collider != null) return false;
+        }
+        else
+        {
+            // 폴백: 태그로 차단
+            var hit = Physics2D.Linecast(origin, target.position);
+            if (hit.collider != null && hit.collider.CompareTag("GameObject")) return false;
+        }
 
         return true;
     }

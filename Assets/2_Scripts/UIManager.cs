@@ -1,86 +1,67 @@
 ﻿using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using TMPro;
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    [Header("HUD")]
-    public TextMeshProUGUI AmmoText;
+    [Header("Ammo & Icon")]
+    [SerializeField] TextMeshProUGUI ammoText;     // 예: Canvas/AmmoText
+    [SerializeField] SpriteRenderer weaponIconSR;  // 예: Canvas/WeaponIcon (SpriteRenderer)
 
     [Header("Reload UI")]
-    [SerializeField] private GameObject reloadCircle;
+    [SerializeField] GameObject reloadCircle;      // 예: Canvas/ReloadCircle (부모 오브젝트)
 
-    [Header("Weapon Icons (0=Fork, 1=Spoon, 2=Chopstick)")]
-    [SerializeField] private GameObject[] weaponIconObjs; // 캔버스에 있는 3개를 순서대로 드래그
+    [Header("Died Panel")]
+    [SerializeField] GameObject diedPanel;
 
-    [Header("Died UI")]
-    [SerializeField] private GameObject diedPanel;
-    [SerializeField] private Button restartButton;
-
-    private Gun currentGun;
+    Gun currentGun;
 
     void Awake()
     {
-        if (Instance == null) Instance = this;
-        else { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
 
-        if (diedPanel) diedPanel.SetActive(false);
-        if (restartButton)
-        {
-            restartButton.onClick.RemoveAllListeners();
-            restartButton.onClick.AddListener(Restart);
-        }
-
-        HideReloadCircle();
-        // 아이콘 초기화: 전부 끄기
-        SetWeaponIconActive(-1);
+        if (reloadCircle) reloadCircle.SetActive(false);
+        if (weaponIconSR) weaponIconSR.enabled = false;
     }
 
-    // ====== 공개 API ======
-
-    public void UpdateAmmoText(int current, int max)
-    {
-        if (!AmmoText) return;
-        AmmoText.text = (current < 0) ? $"∞ / {max}" : $"{current} / {max}";
-    }
-
+    // ───────── 외부에서 호출 ─────────
     public void RegisterGun(Gun gun)
     {
         currentGun = gun;
-        if (gun != null)
+        UpdateAmmoText(gun.GetCurrentAmmo(), gun.GetMaxAmmo());
+
+        // 무기 아이콘 = 현재 무기의 SpriteRenderer 스프라이트
+        if (weaponIconSR)
         {
-            UpdateAmmoText(gun.GetCurrentAmmo(), gun.maxAmmo);
-            HideReloadCircle();
+            var sr = gun ? gun.GetComponentInChildren<SpriteRenderer>(true) : null;
+            weaponIconSR.sprite = sr ? sr.sprite : null;
+            weaponIconSR.enabled = weaponIconSR.sprite != null;
         }
     }
 
-    public void ShowReloadCircle() { if (reloadCircle) reloadCircle.SetActive(true); }
-    public void HideReloadCircle() { if (reloadCircle) reloadCircle.SetActive(false); }
-
-    public void SetWeaponIconActive(int index)
+    public void UpdateAmmoText(int cur, int max)
     {
-        if (weaponIconObjs == null) return;
-        for (int i = 0; i < weaponIconObjs.Length; i++)
-            if (weaponIconObjs[i]) weaponIconObjs[i].SetActive(i == index);
+        if (ammoText) ammoText.text = $"{cur} / {max}";
     }
 
+    public void ShowReloadCircle()
+    {
+        if (reloadCircle && !reloadCircle.activeSelf) reloadCircle.SetActive(true);
+    }
+
+    public void HideReloadCircle()
+    {
+        if (reloadCircle && reloadCircle.activeSelf) reloadCircle.SetActive(false);
+    }
     public void ShowDiedPanel()
     {
-        if (!diedPanel) return;
-        diedPanel.SetActive(true);
-        Time.timeScale = 0f;
-        AudioListener.pause = true;
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        if (diedPanel) diedPanel.SetActive(true);
     }
 
-    public void Restart()
+    public void HideDiedPanel()
     {
-        Time.timeScale = 1f;
-        AudioListener.pause = false;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        if (diedPanel) diedPanel.SetActive(false);
     }
 }

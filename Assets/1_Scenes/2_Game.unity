@@ -401,14 +401,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 636f75b73d37e1242a2212a3d724fee3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AmmoText: {fileID: 848997969}
+  ammoText: {fileID: 848997969}
+  weaponIconSR: {fileID: 388043306}
   reloadCircle: {fileID: 1065858718}
-  weaponIconObjs:
-  - {fileID: 388043305}
-  - {fileID: 1179548301}
-  - {fileID: 2113384542}
   diedPanel: {fileID: 1153401906}
-  restartButton: {fileID: 487062133}
 --- !u!4 &60928258
 Transform:
   m_ObjectHideFlags: 0
@@ -417,12 +413,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 60928256}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.7206056, y: -4.470802, z: -2.9045112}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -259.11328, y: 463.72998, z: -266.0583}
+  m_LocalScale: {x: 2.8637824, y: 2.8637824, z: 2.8637824}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 951296536}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &88877566
 GameObject:
@@ -1373,10 +1369,9 @@ GameObject:
   - component: {fileID: 546217753}
   - component: {fileID: 546217754}
   - component: {fileID: 546217755}
-  - component: {fileID: 546217756}
   - component: {fileID: 546217757}
-  - component: {fileID: 546217759}
   - component: {fileID: 546217758}
+  - component: {fileID: 546217759}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1642,28 +1637,6 @@ MonoBehaviour:
   drainPerSecond: 1
   minSpoilFactor: 0.3
   spoilFullSeconds: 180
---- !u!114 &546217756
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 546217742}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b999552bfc2b704592f4c2d2a3a7814, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  weaponPrefabs:
-  - {fileID: 4507702449573473818, guid: fb2f83af045fa774dbedbb7d1b1f2d46, type: 3}
-  - {fileID: 8056019251577505871, guid: 653f3af48ad38114bbba24c31357a192, type: 3}
-  - {fileID: 7270695959572244684, guid: 120dada156c48764c93142f68fb2c5c1, type: 3}
-  weaponSocket: {fileID: 551469277}
-  wrapAround: 1
-  switchCooldown: 0.2
-  defaultIndex: 0
-  crosshair: {fileID: 126138893}
-  verboseDebug: 0
 --- !u!114 &546217757
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1699,13 +1672,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 546217742}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a9a4ed8021192d498aea14101590147, type: 3}
+  m_Script: {fileID: 11500000, guid: 91c7b933411a7ad43b4532fb5c2d730a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyBaseHP: 30
-  currentStage: 1
-  mainWeapon: 0
-  currentWeapon: 0
+  weaponPrefabs:
+  - {fileID: 4507702449573473818, guid: fb2f83af045fa774dbedbb7d1b1f2d46, type: 3}
+  - {fileID: 8056019251577505871, guid: 653f3af48ad38114bbba24c31357a192, type: 3}
+  - {fileID: 7270695959572244684, guid: 120dada156c48764c93142f68fb2c5c1, type: 3}
+  weaponSocket: {fileID: 551469277}
+  wrapAround: 1
+  switchCooldown: 0.2
+  defaultIndex: 0
+  crosshair: {fileID: 0}
+  sharedAmmo: {fileID: 0}
+  useStageRules: 0
+  stage1Index: 0
+  stage2Index: 0
+  stage3Index: 0
 --- !u!1 &551469276
 GameObject:
   m_ObjectHideFlags: 0
@@ -2207,6 +2190,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 60928258}
   - {fileID: 88877567}
   - {fileID: 848997968}
   - {fileID: 388043307}
@@ -4167,7 +4151,6 @@ SceneRoots:
   - {fileID: 315458528}
   - {fileID: 718230530}
   - {fileID: 1996972845}
-  - {fileID: 60928258}
   - {fileID: 513368530}
   - {fileID: 1575859839}
   - {fileID: 1703110583}

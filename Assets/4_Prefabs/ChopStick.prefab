@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 9141423405950440912}
   - component: {fileID: 6103058179213788358}
-  - component: {fileID: 554328646013451076}
   - component: {fileID: 3844197030982337548}
   - component: {fileID: -4218107517917325442}
   m_Layer: 0
@@ -90,21 +89,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &554328646013451076
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7270695959572244684}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c589e44da416ea47a02be42a49939e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isLeft: 0
-  spriter: {fileID: 6103058179213788358}
-  player: {fileID: 0}
 --- !u!114 &3844197030982337548
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,9 +105,9 @@ MonoBehaviour:
   maxAmmo: 6
   reloadTime: 2
   fireRate: 0.25
-  Damage: 5
   Pierce: 1
   bulletPrefab: {fileID: 2338185472800916295, guid: f19738c94d9c17c4c8cbc4b14c8265cd, type: 3}
+  sharedAmmo: {fileID: 0}
 --- !u!114 &-4218107517917325442
 MonoBehaviour:
   m_ObjectHideFlags: 0

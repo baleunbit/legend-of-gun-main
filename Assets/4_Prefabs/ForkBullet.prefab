@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 3918000975189788097}
   - component: {fileID: 6587589055383989665}
   - component: {fileID: 3365717815636581087}
-  - component: {fileID: 2735399584804277802}
   m_Layer: 0
   m_Name: ForkBullet
   m_TagString: Bullet
@@ -169,17 +168,3 @@ CapsuleCollider2D:
   m_Offset: {x: 0.0016256969, y: -0.048370205}
   m_Size: {x: 0.41810864, y: 1.8646206}
   m_Direction: 0
---- !u!114 &2735399584804277802
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 395887361386517366}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f674dd6a05cf2cf45811a624652a7d34, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  weaponType: 0
-  alsoSendMessage: 1

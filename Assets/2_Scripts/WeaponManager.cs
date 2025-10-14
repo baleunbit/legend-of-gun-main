@@ -1,44 +1,45 @@
+using System.Collections.Generic;
 using UnityEngine;
-using System;
 
-[DisallowMultipleComponent]
 public class WeaponManager : MonoBehaviour
 {
-    public enum WeaponType { Fork, Spoon, Chopstick }
+    [Header("무기 프리팹 (0=Fork, 1=Spoon, 2=ChopStick)")]
+    public List<GameObject> weaponPrefabs;
 
-    [Header("무기 프리팹 (0=Fork, 1=Spoon, 2=Chopstick)")]
-    [SerializeField] private GameObject[] weaponPrefabs;
+    [Header("장착 소켓 (Player 아래 빈 오브젝트)")]
+    public Transform weaponSocket;
 
-    [Header("장착 소켓")]
-    [SerializeField] private Transform weaponSocket;
+    [Header("입력/옵션")]
+    public bool wrapAround = true;
+    public float switchCooldown = 0.2f;
+    public int defaultIndex = 0;
 
-    [Header("전투 규칙")]
-    [SerializeField] private float enemyBaseHP = 30f; // 몹 기본 체력
+    [Header("참조(선택)")]
+    public Transform crosshair;        // 없으면 자동으로 찾음
+    public SharedAmmo sharedAmmo;      // 공용 탄약 쓰면 지정
 
-    [Header("입력/전환")]
-    [SerializeField] private bool wrapAround = true;
-    [SerializeField] private float switchCooldown = 0.2f;
-    private float nextSwitchTime;
+    [Header("Stage Rules (optional)")]
+    public bool useStageRules = false;
+    public int stage1Index = 0;
+    public int stage2Index = 0;
+    public int stage3Index = 0;
 
-    // 런타임 상태
-    public int CurrentStage { get; private set; } = 1;
-    public WeaponType MainWeapon { get; private set; } = WeaponType.Fork;
-    public WeaponType CurrentWeapon { get; private set; } = WeaponType.Fork;
-
-    public event Action<WeaponType> OnWeaponChanged;
-
-    GameObject currentGO;
     int currentIndex = -1;
+    GameObject currentGO;
+    float nextSwitchTime;
 
     void Start()
     {
         if (!weaponSocket)
         {
-            Debug.LogError("[WeaponManager] weaponSocket 미지정");
+            Debug.LogError("[WeaponManager] weaponSocket 지정 필요");
             enabled = false; return;
         }
-        // 시작 시 주무기 장착
-        Equip((int)MainWeapon);
+        if (!crosshair)
+            crosshair = GameObject.FindWithTag("Crosshair")?.transform
+                     ?? GameObject.Find("Crosshair")?.transform;
+
+        Equip(Mathf.Clamp(defaultIndex, 0, (weaponPrefabs?.Count ?? 1) - 1));
     }
 
     void Update()
@@ -54,66 +55,71 @@ public class WeaponManager : MonoBehaviour
         else if (scroll < -0.01f) Prev();
     }
 
-    // ── 스테이지 규칙 ───────────────────────────────
     public void ApplyStageRules(int stage)
     {
-        CurrentStage = stage;
-        MainWeapon = stage switch
+        if (!useStageRules) return;
+
+        int idx = defaultIndex;
+        switch (stage)
         {
-            1 => WeaponType.Fork,
-            2 => WeaponType.Fork,
-            3 => WeaponType.Spoon,
-            4 => WeaponType.Chopstick,
-            _ => WeaponType.Fork
-        };
-        // 스테이지가 바뀌면 주무기를 손에 쥠 (원하면 주석 처리)
-        Equip((int)MainWeapon);
+            case 1: idx = stage1Index; break;
+            case 2: idx = stage2Index; break;
+            case 3: idx = stage3Index; break;
+            default: idx = defaultIndex; break;
+        }
+
+        Equip(Mathf.Clamp(idx, 0, (weaponPrefabs?.Count ?? 1) - 1));
     }
 
-    // 주무기 3타 / 비주무기 6타
-    public float GetDamage()
-    {
-        bool isMain = (CurrentWeapon == MainWeapon);
-        return isMain ? (enemyBaseHP / 3f) : (enemyBaseHP / 6f);
-    }
-
-    // ── 무기 전환/장착 ─────────────────────────────
     public void Next()
     {
-        int n = weaponPrefabs?.Length ?? 0;
-        if (n == 0) return;
-        int i = currentIndex + 1;
-        if (i >= n) i = wrapAround ? 0 : n - 1;
+        int n = weaponPrefabs?.Count ?? 0; if (n == 0) return;
+        int i = currentIndex + 1; if (i >= n) i = wrapAround ? 0 : n - 1;
         Equip(i);
     }
-
     public void Prev()
     {
-        int n = weaponPrefabs?.Length ?? 0;
-        if (n == 0) return;
-        int i = currentIndex - 1;
-        if (i < 0) i = wrapAround ? n - 1 : 0;
+        int n = weaponPrefabs?.Count ?? 0; if (n == 0) return;
+        int i = currentIndex - 1; if (i < 0) i = wrapAround ? n - 1 : 0;
         Equip(i);
     }
 
-    public void Equip(int idx)
+    void Equip(int idx)
     {
-        if (weaponPrefabs == null || idx < 0 || idx >= weaponPrefabs.Length) return;
-        if (idx == currentIndex && currentGO) return;
+        if (weaponPrefabs == null || idx < 0 || idx >= weaponPrefabs.Count) return;
+        if (idx == currentIndex) return;
 
-        if (currentGO) Destroy(currentGO);
+        // 이전 무기 제거
+        if (currentGO) { Destroy(currentGO); currentGO = null; }
 
         var prefab = weaponPrefabs[idx];
-        if (!prefab) return;
+        if (!prefab) { Debug.LogError("[WeaponManager] 프리팹 비어있음"); return; }
 
+        // 소켓의 '자식'으로 생성 (월드값 유지 X → 로컬 0으로 시작)
         currentGO = Instantiate(prefab, weaponSocket);
         currentGO.transform.localPosition = Vector3.zero;
         currentGO.transform.localRotation = Quaternion.identity;
         currentGO.transform.localScale = Vector3.one;
 
         currentIndex = idx;
-        CurrentWeapon = (WeaponType)idx;
-        OnWeaponChanged?.Invoke(CurrentWeapon);
+
+        // 장착 보정(WeaponMount)
+        var mount = currentGO.GetComponent<WeaponMount>();
+        if (mount)
+        {
+            currentGO.transform.localPosition += (Vector3)mount.localOffset;
+            var e = currentGO.transform.localEulerAngles; e.z += mount.localZRotation;
+            currentGO.transform.localEulerAngles = e;
+        }
+
+        // Gun 세팅
+        var gun = currentGO.GetComponent<Gun>();
+        if (gun)
+        {
+            if (crosshair) gun.Crosshair = crosshair;
+            if (sharedAmmo) gun.sharedAmmo = sharedAmmo; // 공용 탄약 사용
+            UIManager.Instance?.RegisterGun(gun);       // 아이콘/탄약 UI 갱신
+        }
 
         nextSwitchTime = Time.time + switchCooldown;
     }
