@@ -1,22 +1,22 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 public class WeaponManager : MonoBehaviour
 {
-    [Header("¹«±â ÇÁ¸®ÆÕ (0=Fork, 1=Spoon, 2=ChopStick)")]
+    [Header("ë¬´ê¸° í”„ë¦¬íŒ¹ (0=Fork, 1=Spoon, 2=ChopStick)")]
     public List<GameObject> weaponPrefabs;
 
-    [Header("ÀåÂø ¼ÒÄÏ (Player ¾Æ·¡ ºó ¿ÀºêÁ§Æ®)")]
+    [Header("ì¥ì°© ì†Œì¼“ (Player ì•„ë˜ ë¹ˆ ì˜¤ë¸Œì íŠ¸)")]
     public Transform weaponSocket;
 
-    [Header("ÀÔ·Â/¿É¼Ç")]
+    [Header("ì…ë ¥/ì˜µì…˜")]
     public bool wrapAround = true;
     public float switchCooldown = 0.2f;
     public int defaultIndex = 0;
 
-    [Header("ÂüÁ¶(¼±ÅÃ)")]
-    public Transform crosshair;        // ¾øÀ¸¸é ÀÚµ¿À¸·Î Ã£À½
-    public SharedAmmo sharedAmmo;      // °ø¿ë Åº¾à ¾²¸é ÁöÁ¤
+    [Header("ì°¸ì¡°(ì„ íƒ)")]
+    public Transform crosshair;        // ì—†ìœ¼ë©´ ìë™ìœ¼ë¡œ ì°¾ìŒ
+    public SharedAmmo sharedAmmo;      // ê³µìš© íƒ„ì•½ ì“°ë©´ ì§€ì •
 
     [Header("Stage Rules (optional)")]
     public bool useStageRules = false;
@@ -32,7 +32,7 @@ public class WeaponManager : MonoBehaviour
     {
         if (!weaponSocket)
         {
-            Debug.LogError("[WeaponManager] weaponSocket ÁöÁ¤ ÇÊ¿ä");
+            Debug.LogError("[WeaponManager] weaponSocket ì§€ì • í•„ìš”");
             enabled = false; return;
         }
         if (!crosshair)
@@ -89,13 +89,11 @@ public class WeaponManager : MonoBehaviour
         if (weaponPrefabs == null || idx < 0 || idx >= weaponPrefabs.Count) return;
         if (idx == currentIndex) return;
 
-        // ÀÌÀü ¹«±â Á¦°Å
         if (currentGO) { Destroy(currentGO); currentGO = null; }
 
         var prefab = weaponPrefabs[idx];
-        if (!prefab) { Debug.LogError("[WeaponManager] ÇÁ¸®ÆÕ ºñ¾îÀÖÀ½"); return; }
+        if (!prefab) { Debug.LogError("[WeaponManager] í”„ë¦¬íŒ¹ ë¹„ì–´ìˆìŒ"); return; }
 
-        // ¼ÒÄÏÀÇ 'ÀÚ½Ä'À¸·Î »ı¼º (¿ùµå°ª À¯Áö X ¡æ ·ÎÄÃ 0À¸·Î ½ÃÀÛ)
         currentGO = Instantiate(prefab, weaponSocket);
         currentGO.transform.localPosition = Vector3.zero;
         currentGO.transform.localRotation = Quaternion.identity;
@@ -103,7 +101,9 @@ public class WeaponManager : MonoBehaviour
 
         currentIndex = idx;
 
-        // ÀåÂø º¸Á¤(WeaponMount)
+        // â­ï¸ ì—¬ê¸° ì¶”ê°€: ì¥ì°© ì•„ì´ì½˜ ê°±ì‹ 
+        UIManager.Instance?.SetWeaponIconActive(idx);
+
         var mount = currentGO.GetComponent<WeaponMount>();
         if (mount)
         {
@@ -112,13 +112,12 @@ public class WeaponManager : MonoBehaviour
             currentGO.transform.localEulerAngles = e;
         }
 
-        // Gun ¼¼ÆÃ
         var gun = currentGO.GetComponent<Gun>();
         if (gun)
         {
             if (crosshair) gun.Crosshair = crosshair;
-            if (sharedAmmo) gun.sharedAmmo = sharedAmmo; // °ø¿ë Åº¾à »ç¿ë
-            UIManager.Instance?.RegisterGun(gun);       // ¾ÆÀÌÄÜ/Åº¾à UI °»½Å
+            if (sharedAmmo) gun.sharedAmmo = sharedAmmo;
+            UIManager.Instance?.RegisterGun(gun);
         }
 
         nextSwitchTime = Time.time + switchCooldown;

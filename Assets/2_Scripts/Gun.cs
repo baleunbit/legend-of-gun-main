@@ -72,7 +72,6 @@ public class Gun : MonoBehaviour
             if (!deathHandled)
             {
                 deathHandled = true;
-                UIManager.Instance?.ShowDiedPanel();
             }
             return;
         }
