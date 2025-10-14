@@ -1,3 +1,4 @@
+// Player.cs (핵심 부분만)
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +13,7 @@ public class Player : MonoBehaviour
     public int health = 100;
 
     [Header("UI")]
-    public Image healthBarImage;  // Filled Image
+    public Image healthBarImage;
 
     public bool IsDead => isDead;
     public event Action Died;
@@ -47,14 +48,10 @@ public class Player : MonoBehaviour
 
     void LateUpdate()
     {
-        // 입력 기준 애니/플립
-        ani?.SetFloat("Speed", input.sqrMagnitude);
+        ani.SetFloat("Speed", input.sqrMagnitude);
         if (input.x > 0) spriter.flipX = false;
         else if (input.x < 0) spriter.flipX = true;
     }
-
-    // ❌ (중복 피해 방지) 몹과의 충돌 도트데미지는 제거.
-    //    적의 피해는 Mob.TryAttack()에서만 들어오게 한다.
 
     public void TakeDamage(int damage)
     {
@@ -62,6 +59,15 @@ public class Player : MonoBehaviour
         health = Mathf.Clamp(health - Mathf.Max(0, damage), 0, maxHealth);
         UpdateHealthBar();
         if (health <= 0) Die();
+    }
+
+    public void DieFromHunger()
+    {
+        if (isDead) return;
+        // 배고파서 죽어도 체력 0으로 동기화 (다른 스크립트들이 health<=0 체크함)
+        health = 0;
+        UpdateHealthBar();
+        Die();
     }
 
     void UpdateHealthBar()
@@ -74,7 +80,13 @@ public class Player : MonoBehaviour
         if (isDead) return;
         isDead = true;
         rb.linearVelocity = Vector2.zero;
+
+        // 죽음 애니 트리거
         ani?.SetTrigger("Dead");
+
+        // 게임오버 UI + 정지
+        UIManager.Instance?.ShowDiedPanel();
+
         Died?.Invoke();
         Debug.Log("플레이어 사망");
     }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// EatBar.cs (핵심 변경만)
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -6,11 +7,9 @@ public class EatBar : MonoBehaviour
 {
     public static EatBar Instance { get; private set; }
 
-    [Header("UI (Image fillAmount 사용)")]
-    [SerializeField] Image fillImage;          // ⬅️ UI Image (Filled, Horizontal/Vertical)
+    [SerializeField] Image fillImage;
     [SerializeField] TextMeshProUGUI valueText;
 
-    [Header("수치")]
     [SerializeField] int maxFullness = 100;
     [SerializeField] int startFullness = 50;
     [SerializeField] float drainPerSecond = 2f;
@@ -20,30 +19,52 @@ public class EatBar : MonoBehaviour
     int current;
     float t0;
     float drainAcc = 0f;
+    bool notifiedDeath = false;  // ⬅️ 중복 호출 방지
 
-    void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; }
-    void Start() { current = Mathf.Clamp(startFullness, 0, maxFullness); t0 = Time.time; UpdateUI(); }
+    void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+    }
+
+    void Start()
+    {
+        current = Mathf.Clamp(startFullness, 0, maxFullness);
+        t0 = Time.time;
+        UpdateUI();
+    }
 
     void Update()
     {
         if (current <= 0) return;
 
-        drainAcc += drainPerSecond * Time.deltaTime;   // 초당 값 누적
+        drainAcc += drainPerSecond * Time.deltaTime;
         if (drainAcc >= 1f)
         {
-            int dec = Mathf.FloorToInt(drainAcc);      // 정수로만 깎기
+            int dec = Mathf.FloorToInt(drainAcc);
             current = Mathf.Max(0, current - dec);
             drainAcc -= dec;
 
             UpdateUI();
-            if (current == 0) { UIManager.Instance?.ShowDiedPanel(); return; }
+
+            if (current == 0 && !notifiedDeath)
+            {
+                notifiedDeath = true;
+
+                // ✅ 플레이어에게 "배고파서 죽음" 통지
+                var p = GameObject.FindGameObjectWithTag("Player");
+                var player = p ? p.GetComponent<Player>() : null;
+                player?.DieFromHunger();
+
+                // (UIManager에서 게임오버를 띄우므로, 여기서는 추가 UI 호출 불필요)
+            }
         }
     }
 
     void UpdateUI()
     {
         float f = Mathf.Clamp01((float)current / maxFullness);
-        if (fillImage) fillImage.fillAmount = f;        // ⬅️ 핵심 한 줄
+        if (fillImage) fillImage.fillAmount = f;
         if (valueText) valueText.text = $"{current} / {maxFullness}";
     }
 
@@ -54,13 +75,14 @@ public class EatBar : MonoBehaviour
         float factor = Mathf.Lerp(1f, minSpoilFactor, t);
         int gain = Mathf.Max(1, Mathf.RoundToInt(baseGain * factor));
         current = Mathf.Min(maxFullness, current + gain);
+        notifiedDeath = false; // 회복했으면 다시 살 수 있으니 플래그 리셋
         UpdateUI();
     }
 
     public void AddRaw(int delta)
     {
         current = Mathf.Clamp(current + delta, 0, maxFullness);
+        if (current > 0) notifiedDeath = false;
         UpdateUI();
-        if (current == 0) UIManager.Instance?.ShowDiedPanel();
     }
 }

@@ -133,7 +133,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: 522ae146cf930e24795907d2039f36ba, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 522ae146cf930e24795907d2039f36ba, type: 3}
       propertyPath: m_Name
@@ -401,10 +401,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 636f75b73d37e1242a2212a3d724fee3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ammoText: {fileID: 848997969}
-  weaponIconSR: {fileID: 388043306}
-  reloadCircle: {fileID: 1065858718}
+  pausePanel: {fileID: 1493722120}
   diedPanel: {fileID: 1153401906}
+  settingsPanel: {fileID: 0}
+  ammoText: {fileID: 848997969}
+  reloadCircleGO: {fileID: 0}
+  weaponIconGOs: []
 --- !u!4 &60928258
 Transform:
   m_ObjectHideFlags: 0
@@ -1167,7 +1169,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 60928257}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
-        m_MethodName: Restart
+        m_MethodName: OnClick_Restart
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1614,6 +1616,8 @@ MonoBehaviour:
   requireBackAngle: 0
   backAngle: 120
   biteVfx: {fileID: 0}
+  biteSfx: {fileID: 8300000, guid: d16429b64b3be6a42beb5639001e2bd5, type: 3}
+  biteSfxVolume: 1
   biteCooldown: 0.35
   biteStateName: Bite
   standStateName: Stand 0
@@ -2197,7 +2201,6 @@ RectTransform:
   - {fileID: 1179548303}
   - {fileID: 2113384544}
   - {fileID: 1493722121}
-  - {fileID: 1153401907}
   - {fileID: 484523745}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2282,11 +2285,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1039600064}
   m_CullTransparentMesh: 1
---- !u!1 &1065858718 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100002, guid: 522ae146cf930e24795907d2039f36ba, type: 3}
-  m_PrefabInstance: {fileID: 40841436}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1107407413
 GameObject:
   m_ObjectHideFlags: 0
@@ -2656,20 +2654,20 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1153401906}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 5}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1963361457}
   - {fileID: 487062132}
   - {fileID: 674783740}
-  m_Father: {fileID: 951296536}
+  m_Father: {fileID: 1493722121}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -10, y: -10}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1153401908
 MonoBehaviour:
@@ -3101,6 +3099,7 @@ RectTransform:
   - {fileID: 336319037}
   - {fileID: 1935921261}
   - {fileID: 1107407414}
+  - {fileID: 1153401907}
   m_Father: {fileID: 951296536}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3422,7 +3421,7 @@ MonoBehaviour:
   - {fileID: 7517983769076492075, guid: 43abc29921b51c4419d2139ab5cf1a9b, type: 3}
   startStage: 1
   endStage: 3
-  roomsPerStage: 5
+  roomsPerStage: 3
   bossRoomExactName: BossRoom
   padding: {x: 1, y: 1}
   horizontalJitter: 2

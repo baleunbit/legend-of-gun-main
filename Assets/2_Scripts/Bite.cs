@@ -10,16 +10,20 @@ public class Bite : MonoBehaviour
     public string enemyTag = "Mob";
 
     [Header("조건")]
-    public bool requireStealth = true;      // 발각된 몹은 못 먹음
-    public bool requireBackAngle = false;   // 뒤에서만 먹게 할지
+    public bool requireStealth = true;
+    public bool requireBackAngle = false;
     [Range(0, 180)] public float backAngle = 120f;
 
     [Header("VFX (옵션)")]
     public GameObject biteVfx;
 
+    [Header("SFX")]
+    public AudioClip biteSfx;
+    [Range(0f, 1f)] public float biteSfxVolume = 0.9f;
+
     [Header("애니메이션")]
-    public float biteCooldown = 0.35f;      // 연타 방지
-    public string biteStateName = "Bite";   // 애니 이름
+    public float biteCooldown = 0.35f;
+    public string biteStateName = "Bite";
     public string standStateName = "Stand 0";
 
     [Header("디버그")]
@@ -29,9 +33,9 @@ public class Bite : MonoBehaviour
     Transform _tr;
 
     static readonly int HashBiteTrigger = Animator.StringToHash("Bite");
-    bool _canBite = true;          // 쿨다운
-    bool _pendingBite = false;     // 이번 Bite 애니 동안 1회만 판정
-    Mob _pendingTarget = null;     // 애니 이벤트 시 처리할 대상
+    bool _canBite = true;
+    bool _pendingBite = false;
+    Mob _pendingTarget = null;
 
     void Awake()
     {
@@ -55,13 +59,10 @@ public class Bite : MonoBehaviour
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // 대상 탐색 (성공 시 Bite 시작, 처치는 애니 이벤트에서)
     Mob FindBestTarget()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(_tr.position, biteRange);
-        Mob best = null;
-        float bestDist = float.MaxValue;
+        Mob best = null; float bestDist = float.MaxValue;
 
         foreach (var h in hits)
         {
@@ -71,7 +72,7 @@ public class Bite : MonoBehaviour
             var mob = h.GetComponentInParent<Mob>() ?? h.GetComponent<Mob>();
             if (!mob) continue;
 
-            if (requireStealth && mob.IsAlerted) continue;            // 발각되면 제외
+            if (requireStealth && mob.IsAlerted) continue;
             if (requireBackAngle && !IsBehindTarget(mob.transform)) continue;
 
             float d = ((Vector2)mob.transform.position - (Vector2)_tr.position).sqrMagnitude;
@@ -108,7 +109,7 @@ public class Bite : MonoBehaviour
         _canBite = true;
     }
 
-    // ===== Animation Event 수신 (클립에서 BiteEvent/BiteHitEvent 호출) =====
+    // ===== Animation Event 수신 =====
     public void BiteEvent() { OnBiteHit(); }
     public void BiteHitEvent() { OnBiteHit(); }
 
@@ -119,15 +120,20 @@ public class Bite : MonoBehaviour
 
         if (_pendingTarget != null)
         {
+            // SFX: 한입 성공 위치에서 재생
+            if (biteSfx) AudioSource.PlayClipAtPoint(biteSfx, _pendingTarget.transform.position, biteSfxVolume);
+
+            // VFX
             if (biteVfx) Instantiate(biteVfx, _pendingTarget.transform.position, Quaternion.identity);
-            _pendingTarget.KillSilently();   // ✅ Mob의 메서드 호출
-            EatBar.Instance?.AddFromEat(10); // <- 10은 회복량 (원하면 20~30으로 테스트)
+
+            // 처치 + 포만감
+            _pendingTarget.KillSilently();
+            EatBar.Instance?.AddFromEat(10);
+
             if (debugLog) Debug.Log("[Bite] 성공 처리 완료");
         }
         _pendingTarget = null;
     }
-
-    // =====================================================================
 
     bool IsBehindTarget(Transform target)
     {

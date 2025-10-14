@@ -159,22 +159,20 @@ MonoBehaviour:
   minDamage: 3
   maxDamage: 5
   attackCooldown: 1
-  useSight: 1
-  useProximityDwell: 1
   detectRadius: 15
-  ringAlertTime: 0.6
   viewDistance: 15
   fovAngle: 80
-  loseSightDelay: 0.8
-  eye: {fileID: 0}
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
   target: {fileID: 0}
   anim: {fileID: 7848182402521066036}
   questionMark: {fileID: 0}
   exclamationMark: {fileID: 0}
   maxHP: 30
+  hitSfx: {fileID: 8300000, guid: e472f9a6a3784fd46ba0d286348beef3, type: 3}
+  hitSfxVolume: 1
+  deathSfx: {fileID: 0}
+  deathSfxVolume: 1
+  hitFlashDuration: 1
+  useChildSprites: 1
 --- !u!114 &901908171243112950
 MonoBehaviour:
   m_ObjectHideFlags: 0
