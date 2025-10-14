@@ -155,13 +155,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81900e89e79e0b143a26e2512d2c0d53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 19
+  Speed: 18
   minDamage: 3
   maxDamage: 5
   attackCooldown: 1
+  useSight: 1
+  useProximityDwell: 1
   detectRadius: 15
+  ringAlertTime: 0.6
   viewDistance: 15
   fovAngle: 80
+  loseSightDelay: 0.8
+  eye: {fileID: 0}
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
   target: {fileID: 0}
   anim: {fileID: 7848182402521066036}
   questionMark: {fileID: 0}
