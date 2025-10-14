@@ -247,7 +247,12 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      CakeAttack_0: -750567172590261482
+      CakeAttack_1: 7431622298422558966
+      CakeAttack_2: -7012212066219835435
+      CakeAttack_3: 1451977404734495841
+      CakeAttack_4: -4455707980347182228
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

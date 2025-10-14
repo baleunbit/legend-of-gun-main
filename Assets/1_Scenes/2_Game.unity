@@ -1263,8 +1263,8 @@ MonoBehaviour:
     enemies:
     - {fileID: 6595793593659005269, guid: 210b388a0856e584cb2422ab1d6d4359, type: 3}
     - {fileID: 5047303742285198552, guid: 787b7eb8792a2af4cbfe862923b789c8, type: 3}
-  minEnemiesPerRoom: 6
-  maxEnemiesPerRoom: 12
+  minEnemiesPerRoom: 5
+  maxEnemiesPerRoom: 10
   avoidOthersRadius: 0.5
   obstacleTag: GameObject
   maxSpawnTriesPerEnemy: 20
@@ -3095,6 +3095,7 @@ GameObject:
   - component: {fileID: 1493722121}
   - component: {fileID: 1493722123}
   - component: {fileID: 1493722122}
+  - component: {fileID: 1493722124}
   m_Layer: 5
   m_Name: PausePanel
   m_TagString: Untagged
@@ -3162,6 +3163,34 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1493722120}
   m_CullTransparentMesh: 1
+--- !u!114 &1493722124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1493722120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2826a52093871640b7eefd556485deb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  settingsRoot: {fileID: 0}
+  pageGraphics: {fileID: 0}
+  pageAudio: {fileID: 0}
+  pageSystem: {fileID: 0}
+  ddResolution: {fileID: 0}
+  ddDisplayMode: {fileID: 0}
+  ddTargetFps: {fileID: 0}
+  slMaster: {fileID: 0}
+  slMusic: {fileID: 0}
+  slUI: {fileID: 0}
+  slSFX: {fileID: 0}
+  mixer: {fileID: 0}
+  pMaster: MasterVol
+  pMusic: MusicVol
+  pUI: UIVol
+  pSFX: SFXVol
 --- !u!1 &1532253049
 GameObject:
   m_ObjectHideFlags: 0
