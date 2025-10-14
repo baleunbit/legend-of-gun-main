@@ -37,6 +37,10 @@ public class Mob : MonoBehaviour
     public float hitFlashDuration = 0.08f;
     public bool useChildSprites = true; // 자식의 스프라이트도 포함할지
 
+    [Header("먹었을 때 EatBar 보상")]
+    public int eatGain = 5;                 // 🔸 마리당 5씩
+    bool eatCounted = false;                // 중복 카운트 방지
+
     public bool IsAlerted => hasSpotted;
     public bool IsAlive => isLive;
 
@@ -210,7 +214,21 @@ public class Mob : MonoBehaviour
         ShowAlert(false);
         foreach (var c in GetComponentsInChildren<Collider2D>(true)) if (c) c.enabled = false;
         if (rb) rb.simulated = false;
+
         Destroy(gameObject);
+    }
+
+    // 🔸 플레이어가 "먹었을 때" 호출해 줄 공개 함수 (Bite 등에서 호출)
+    public void OnEatenByPlayer()
+    {
+        if (eatCounted) return;
+        eatCounted = true;
+
+        // EatBar 게이지 +5
+        EatBar.Instance?.AddFromEat(eatGain);
+
+        // 연출 필요 없으면 조용히 제거
+        KillSilently();
     }
 
     // ── 하얀 번쩍 플래시 ─────────────────────────────────────
@@ -218,11 +236,9 @@ public class Mob : MonoBehaviour
     {
         if (dur <= 0f) yield break;
 
-        // 대상 스프라이트 목록 (질문/느낌표 표식은 제외)
         var list = useChildSprites ? GetComponentsInChildren<SpriteRenderer>(true)
                                    : new[] { sr };
 
-        // 원본 색 저장
         int n = list.Length;
         var originals = new Color[n];
         for (int i = 0; i < n; i++)
@@ -230,18 +246,16 @@ public class Mob : MonoBehaviour
             var s = list[i];
             if (!s) continue;
 
-            // 질문/느낌표 표식 제외
             if ((questionMark && s.transform.IsChildOf(questionMark.transform)) ||
                 (exclamationMark && s.transform.IsChildOf(exclamationMark.transform)))
                 continue;
 
             originals[i] = s.color;
-            s.color = Color.white;   // 빠르게 하얀색
+            s.color = Color.white;
         }
 
         yield return new WaitForSeconds(dur);
 
-        // 원래 색 복원
         for (int i = 0; i < n; i++)
         {
             var s = list[i];
