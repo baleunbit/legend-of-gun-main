@@ -33,14 +33,6 @@ public class Mob : MonoBehaviour
     public AudioClip deathSfx;
     [Range(0f, 1f)] public float deathSfxVolume = 1f;
 
-    [Header("히트 플래시")]
-    public float hitFlashDuration = 0.08f;
-    public bool useChildSprites = true; // 자식의 스프라이트도 포함할지
-
-    [Header("먹었을 때 EatBar 보상")]
-    public int eatGain = 5;                 // 🔸 마리당 5씩
-    bool eatCounted = false;                // 중복 카운트 방지
-
     public bool IsAlerted => hasSpotted;
     public bool IsAlive => isLive;
 
@@ -160,10 +152,7 @@ public class Mob : MonoBehaviour
         float ang = Vector2.Angle(forward, to.normalized);
         if (ang > (fovAngle * 0.5f)) return false;
 
-        var hit = Physics2D.Linecast(myPos, target.position);
-        if (hit.collider != null && hit.collider.CompareTag("GameObject"))
-            return false;
-
+        // 간단화: 라인캐스트 생략(맵 가림 처리 필요하면 추가)
         return true;
     }
 
@@ -178,19 +167,13 @@ public class Mob : MonoBehaviour
     {
         if (!isLive) return;
 
-        // SFX + 플래시
-        PlayHitSfx();
-        StartCoroutine(FlashWhite(hitFlashDuration));
+        // 피격 사운드만 재생 (히트 플래시 제거)
+        if (hitSfx)
+            AudioSource.PlayClipAtPoint(hitSfx, transform.position, hitSfxVolume);
 
         currentHP -= Mathf.Max(1, damage);
         SetAlerted();
         if (currentHP <= 0) Die();
-    }
-
-    void PlayHitSfx()
-    {
-        if (hitSfx)
-            AudioSource.PlayClipAtPoint(hitSfx, transform.position, hitSfxVolume);
     }
 
     public void KillSilently()
@@ -214,67 +197,7 @@ public class Mob : MonoBehaviour
         ShowAlert(false);
         foreach (var c in GetComponentsInChildren<Collider2D>(true)) if (c) c.enabled = false;
         if (rb) rb.simulated = false;
-
         Destroy(gameObject);
-    }
-
-    // 🔸 플레이어가 "먹었을 때" 호출해 줄 공개 함수 (Bite 등에서 호출)
-    public void OnEatenByPlayer()
-    {
-
-        if (eatCounted) return;
-        eatCounted = true;
-
-        // EatBar 게이지 +5
-        EatBar.Instance?.AddFromEat(eatGain);
-        // EatBar
-        EatBar.Instance?.AddFromEat(5);
-
-        // Exp +1 (무기 처치에는 호출하지 말 것)
-        var p = GameObject.FindGameObjectWithTag("Player");
-        var player = p ? p.GetComponent<Player>() : null;
-        player?.AddExpFromBite(1);
-
-        // 연출 필요 없으면 조용히 제거
-        KillSilently();
-    }
-
-    // ── 하얀 번쩍 플래시 ─────────────────────────────────────
-    System.Collections.IEnumerator FlashWhite(float dur)
-    {
-        if (dur <= 0f) yield break;
-
-        var list = useChildSprites ? GetComponentsInChildren<SpriteRenderer>(true)
-                                   : new[] { sr };
-
-        int n = list.Length;
-        var originals = new Color[n];
-        for (int i = 0; i < n; i++)
-        {
-            var s = list[i];
-            if (!s) continue;
-
-            if ((questionMark && s.transform.IsChildOf(questionMark.transform)) ||
-                (exclamationMark && s.transform.IsChildOf(exclamationMark.transform)))
-                continue;
-
-            originals[i] = s.color;
-            s.color = Color.white;
-        }
-
-        yield return new WaitForSeconds(dur);
-
-        for (int i = 0; i < n; i++)
-        {
-            var s = list[i];
-            if (!s) continue;
-
-            if ((questionMark && s.transform.IsChildOf(questionMark.transform)) ||
-                (exclamationMark && s.transform.IsChildOf(exclamationMark.transform)))
-                continue;
-
-            s.color = originals[i];
-        }
     }
 
     void ShowQuestion(bool on)
@@ -305,15 +228,6 @@ public class Mob : MonoBehaviour
     {
         Gizmos.color = new Color(0.2f, 0.7f, 1f, 0.25f);
         Gizmos.DrawWireSphere(transform.position, detectRadius);
-        Gizmos.color = new Color(1f, 0.9f, 0.1f, 0.25f);
-        Vector2 forward = Vector2.right;
-        var sr0 = GetComponentInChildren<SpriteRenderer>();
-        if (sr0 && sr0.flipX) forward = Vector2.left;
-        float half = fovAngle * 0.5f;
-        Vector2 L = Quaternion.Euler(0, 0, +half) * forward * viewDistance;
-        Vector2 R = Quaternion.Euler(0, 0, -half) * forward * viewDistance;
-        Gizmos.DrawLine(transform.position, (Vector2)transform.position + L);
-        Gizmos.DrawLine(transform.position, (Vector2)transform.position + R);
     }
 #endif
 }

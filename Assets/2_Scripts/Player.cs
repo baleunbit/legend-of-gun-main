@@ -1,3 +1,4 @@
+// Player.cs
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,10 +21,8 @@ public class Player : MonoBehaviour
     public int Exp => exp;
     public int ExpToNext => GetExpToNext(level);
 
-    public event Action<int, int, int> OnExpChanged; // (level, exp, expToNext)
+    public event Action<int, int, int> OnExpChanged;
     public event Action<int> OnLeveledUp;
-    public bool IsDead => isDead;
-    public event Action Died;
 
     Rigidbody2D rb;
     SpriteRenderer spriter;
@@ -40,8 +39,8 @@ public class Player : MonoBehaviour
         health = Mathf.Clamp(health, 0, maxHealth);
         UpdateHealthBar();
 
-        OnExpChanged?.Invoke(level, exp, ExpToNext);
         UIManager.Instance?.SetExpUI(level, exp, ExpToNext);
+        OnExpChanged?.Invoke(level, exp, ExpToNext);
     }
 
     void Update()
@@ -58,12 +57,12 @@ public class Player : MonoBehaviour
 
     void LateUpdate()
     {
-        ani.SetFloat("Speed", input.sqrMagnitude);
+        ani?.SetFloat("Speed", input.sqrMagnitude);
         if (input.x > 0) spriter.flipX = false;
         else if (input.x < 0) spriter.flipX = true;
     }
 
-    // === 체력 관리 ===
+    // ===== 체력 =====
     public void TakeDamage(int damage)
     {
         if (isDead) return;
@@ -71,7 +70,6 @@ public class Player : MonoBehaviour
         UpdateHealthBar();
         if (health <= 0) Die();
     }
-
     public void DieFromHunger()
     {
         if (isDead) return;
@@ -79,75 +77,58 @@ public class Player : MonoBehaviour
         UpdateHealthBar();
         Die();
     }
-
     void UpdateHealthBar()
     {
         if (healthBarImage)
             healthBarImage.fillAmount = (float)health / maxHealth;
     }
-
     void Die()
     {
         if (isDead) return;
         isDead = true;
         rb.linearVelocity = Vector2.zero;
         ani?.SetTrigger("Dead");
-
         UIManager.Instance?.ShowDiedPanel();
-        Died?.Invoke();
         Debug.Log("플레이어 사망");
     }
 
-    // === Bite 시 경험치 획득 ===
+    // ===== Bite로만 Exp 획득 =====
     public void AddExpFromBite(int amount = 1)
     {
         if (amount <= 0) return;
         exp += amount;
 
-        // 연속 레벨업 가능
         while (exp >= ExpToNext)
         {
             exp -= ExpToNext;
             level++;
-
             OnLeveledUp?.Invoke(level);
             UIManager.Instance?.ShowLevelUpPanel();
         }
 
-        OnExpChanged?.Invoke(level, exp, ExpToNext);
         UIManager.Instance?.SetExpUI(level, exp, ExpToNext);
+        OnExpChanged?.Invoke(level, exp, ExpToNext);
     }
 
-    // 경험치 요구량 규칙
+    // 요구치: 1~3:6, 4~9:12, 10~14:15, 15+:18
     public int GetExpToNext(int lv)
     {
-        if (lv <= 3) return 6;      // 1~3레벨
-        if (lv <= 9) return 12;     // 4~9레벨
-        if (lv <= 14) return 15;    // 10~14레벨
-        return 18;                  // 15레벨 이상
+        if (lv <= 3) return 6;
+        if (lv <= 9) return 12;
+        if (lv <= 14) return 15;
+        return 18;
     }
 
-    // 레벨업 시 버튼 눌렀을 때 효과 적용
-    public void ApplyLevelUpChoice(int choiceIndex)
+    // 레벨업 보상 선택
+    public void ApplyLevelUpChoice(int idx)
     {
-        switch (choiceIndex)
+        switch (idx)
         {
-            case 1:
-                maxHealth += 10;
-                health = maxHealth;
-                break;
-            case 2:
-                moveSpeed += 1f;
-                break;
-            case 3:
-                // 예시: 공격속도 증가
-                break;
-            case 4:
-                // 예시: 리로드 속도 증가
-                break;
+            case 1: maxHealth += 10; health = maxHealth; UpdateHealthBar(); break;
+            case 2: moveSpeed += 1f; break;
+            case 3: /* 예: 공격속도 증가 */ break;
+            case 4: /* 예: 재장전 속도 증가 */ break;
         }
-
-        Debug.Log($"능력 {choiceIndex} 선택됨");
         UIManager.Instance?.HideLevelUpPanel();
     }
 }

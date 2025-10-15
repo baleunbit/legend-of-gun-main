@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// Bite.cs
+using UnityEngine;
 using System.Collections;
 
 [RequireComponent(typeof(Animator))]
@@ -10,14 +11,12 @@ public class Bite : MonoBehaviour
     public string enemyTag = "Mob";
 
     [Header("조건")]
-    public bool requireStealth = true;
+    public bool requireStealth = true;   // 경계 중인 몹은 못 먹기
     public bool requireBackAngle = false;
     [Range(0, 180)] public float backAngle = 120f;
 
-    [Header("VFX (옵션)")]
+    [Header("VFX/SFX (옵션)")]
     public GameObject biteVfx;
-
-    [Header("SFX")]
     public AudioClip biteSfx;
     [Range(0f, 1f)] public float biteSfxVolume = 0.9f;
 
@@ -31,6 +30,7 @@ public class Bite : MonoBehaviour
 
     Animator _anim;
     Transform _tr;
+    Player _player;
 
     static readonly int HashBiteTrigger = Animator.StringToHash("Bite");
     bool _canBite = true;
@@ -43,6 +43,10 @@ public class Bite : MonoBehaviour
         _anim = GetComponent<Animator>();
         if (_anim.runtimeAnimatorController == null)
             Debug.LogError("[Bite] Animator Controller가 비어있음");
+
+        var pObj = GameObject.FindGameObjectWithTag("Player");
+        _player = pObj ? pObj.GetComponent<Player>() : null;
+        if (!_player) Debug.LogWarning("[Bite] Player를 찾지 못했습니다. (Tag=Player 확인)");
     }
 
     void Update()
@@ -70,7 +74,7 @@ public class Bite : MonoBehaviour
                 continue;
 
             var mob = h.GetComponentInParent<Mob>() ?? h.GetComponent<Mob>();
-            if (!mob) continue;
+            if (!mob || !mob.IsAlive) continue;
 
             if (requireStealth && mob.IsAlerted) continue;
             if (requireBackAngle && !IsBehindTarget(mob.transform)) continue;
@@ -101,7 +105,6 @@ public class Bite : MonoBehaviour
         yield return new WaitForSeconds(delay);
         _anim.CrossFadeInFixedTime(standStateName, 0.05f, 0, 0f);
     }
-
     IEnumerator CoCooldown()
     {
         _canBite = false;
@@ -109,7 +112,7 @@ public class Bite : MonoBehaviour
         _canBite = true;
     }
 
-    // ===== Animation Event 수신 =====
+    // 애니메이션 이벤트에서 호출할 것: BiteEvent 또는 BiteHitEvent
     public void BiteEvent() { OnBiteHit(); }
     public void BiteHitEvent() { OnBiteHit(); }
 
@@ -118,19 +121,20 @@ public class Bite : MonoBehaviour
         if (!_pendingBite) return;
         _pendingBite = false;
 
-        if (_pendingTarget != null)
+        if (_pendingTarget != null && _pendingTarget.IsAlive)
         {
-            // SFX: 한입 성공 위치에서 재생
             if (biteSfx) AudioSource.PlayClipAtPoint(biteSfx, _pendingTarget.transform.position, biteSfxVolume);
-
-            // VFX
             if (biteVfx) Instantiate(biteVfx, _pendingTarget.transform.position, Quaternion.identity);
 
-            // 처치 + 포만감
-            _pendingTarget.KillSilently();
+            // ★ Exp +1 (Bite로만)
+            _player?.AddExpFromBite(1);
+
+            // ★ 포만감 (원하면 조정)
             EatBar.Instance?.AddFromEat(10);
 
-            if (debugLog) Debug.Log("[Bite] 성공 처리 완료");
+            _pendingTarget.KillSilently();
+
+            if (debugLog) Debug.Log("[Bite] 성공 처리 완료 (Exp+1, EatBar+10)");
         }
         _pendingTarget = null;
     }
@@ -147,7 +151,9 @@ public class Bite : MonoBehaviour
 
     float GetStateLength(string stateName)
     {
-        var clips = _anim.runtimeAnimatorController.animationClips;
+        var ctr = _anim.runtimeAnimatorController;
+        if (ctr == null) return 0f;
+        var clips = ctr.animationClips;
         foreach (var c in clips) if (c.name == stateName) return c.length;
         return 0f;
     }
