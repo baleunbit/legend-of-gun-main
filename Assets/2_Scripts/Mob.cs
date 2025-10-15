@@ -221,11 +221,19 @@ public class Mob : MonoBehaviour
     // 🔸 플레이어가 "먹었을 때" 호출해 줄 공개 함수 (Bite 등에서 호출)
     public void OnEatenByPlayer()
     {
+
         if (eatCounted) return;
         eatCounted = true;
 
         // EatBar 게이지 +5
         EatBar.Instance?.AddFromEat(eatGain);
+        // EatBar
+        EatBar.Instance?.AddFromEat(5);
+
+        // Exp +1 (무기 처치에는 호출하지 말 것)
+        var p = GameObject.FindGameObjectWithTag("Player");
+        var player = p ? p.GetComponent<Player>() : null;
+        player?.AddExpFromBite(1);
 
         // 연출 필요 없으면 조용히 제거
         KillSilently();

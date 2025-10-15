@@ -1,7 +1,7 @@
-﻿// UIManager.cs — 최소 수정/복구 버전
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -16,22 +16,78 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI ammoText;
 
     [Header("Reload Circle (원래 쓰던 오브젝트 연결)")]
-    [SerializeField] private GameObject reloadCircleGO;   // ← 네가 쓰던 리로드 원 GameObject
+    [SerializeField] private GameObject reloadCircleGO;
 
     [Header("Weapon Icons (원래 쓰던 오브젝트 배열)")]
-    [SerializeField] private GameObject[] weaponIconGOs;  // ← 무기 아이콘 GameObject 배열
+    [SerializeField] private GameObject[] weaponIconGOs;
+
+    [Header("Exp UI")]
+    [SerializeField] private Image expFillImage;           // Filled 타입 Image
+    [SerializeField] private TextMeshProUGUI levelText;    // "LV.1" 표기
+
+    [Header("LevelUp Panel (GameObject 버전)")]
+    [SerializeField] private GameObject levelUpPanelGO;    // ← 패널 루트 오브젝트
+    [SerializeField] private Button btn1;
+    [SerializeField] private Button btn2;
+    [SerializeField] private Button btn3;
+    [SerializeField] private Button btn4;
 
     private Gun currentGun;
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        if (btn1) btn1.onClick.AddListener(() => OnChooseAbility(1));
+        if (btn2) btn2.onClick.AddListener(() => OnChooseAbility(2));
+        if (btn3) btn3.onClick.AddListener(() => OnChooseAbility(3));
+        if (btn4) btn4.onClick.AddListener(() => OnChooseAbility(4));
+
+        HideLevelUpPanelImmediate(); // GameObject.SetActive(false)
     }
 
-    // ─────────────────────────────────────────────
-    // 🔫 Gun/WeaponManager 연동 — 기존 시그니처 그대로
-    // ─────────────────────────────────────────────
+    // ==== 레벨업 패널 (GameObject) ====
+    public void ShowLevelUpPanel()
+    {
+        if (levelUpPanelGO) levelUpPanelGO.SetActive(true);
+        Time.timeScale = 0f;
+    }
+
+    public void HideLevelUpPanel()
+    {
+        if (levelUpPanelGO) levelUpPanelGO.SetActive(false);
+        Time.timeScale = 1f;
+    }
+
+    public void HideLevelUpPanelImmediate()
+    {
+        if (levelUpPanelGO) levelUpPanelGO.SetActive(false);
+    }
+
+    void OnChooseAbility(int idx)
+    {
+        var p = GameObject.FindGameObjectWithTag("Player");
+        var player = p ? p.GetComponent<Player>() : null;
+        player?.ApplyLevelUpChoice(idx);
+        HideLevelUpPanel();
+    }
+
+    // ==== 경험치 UI ====
+    public void SetExpUI(int level, int exp, int toNext)
+    {
+        if (expFillImage)
+        {
+            float ratio = (toNext > 0) ? (float)exp / toNext : 0f;
+            expFillImage.fillAmount = Mathf.Clamp01(ratio);
+        }
+        if (levelText)
+        {
+            levelText.text = $"LV.{level}";
+        }
+    }
+
+    // ==== Gun/Weapon UI ====
     public void RegisterGun(Gun gun)
     {
         currentGun = gun;
@@ -45,16 +101,12 @@ public class UIManager : MonoBehaviour
     {
         if (ammoText)
             ammoText.text = $"{current} / {max}";
-        // 텍스트가 없으면 아무것도 안 함(원래 UI 유지)
     }
 
-    // 리로드 서클 — 네가 쓰던대로 SetActive만
-    // (호환 위해 3가지 시그니처 모두 제공)
     public void ShowReloadCircle() { if (reloadCircleGO) reloadCircleGO.SetActive(true); }
     public void HideReloadCircle() { if (reloadCircleGO) reloadCircleGO.SetActive(false); }
     public void ShowReloadCircle(bool on) { if (reloadCircleGO) reloadCircleGO.SetActive(on); }
 
-    // 무기 아이콘 — 인덱스만 활성화, 나머지 비활성 (원래 방식)
     public void SetWeaponIconActive(int activeIndex)
     {
         if (weaponIconGOs == null) return;
@@ -66,9 +118,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // ─────────────────────────────────────────────
-    // ☠️ 사망 패널(옵션) — 기존에 썼다면 유지, 아니면 무시
-    // ─────────────────────────────────────────────
+    // ==== 사망 패널 ====
     public void ShowDiedPanel()
     {
         if (diedPanel) diedPanel.SetActive(true);
@@ -77,9 +127,7 @@ public class UIManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
     }
 
-    // ─────────────────────────────────────────────
-    // ⏸ 일시정지/설정(옵션) — 연결 안 했으면 그냥 무시됨
-    // ─────────────────────────────────────────────
+    // ==== 일시정지 / 설정 ====
     public void ShowPausePanel(bool on)
     {
         if (pausePanel) pausePanel.SetActive(on);
@@ -93,7 +141,7 @@ public class UIManager : MonoBehaviour
         if (settingsPanel) settingsPanel.SetActive(on);
     }
 
-    // 🔁 재시작 버튼(옵션)
+    // ==== 재시작 버튼 ====
     public void OnClick_Restart()
     {
         Time.timeScale = 1f;

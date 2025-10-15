@@ -1,4 +1,3 @@
-// Player.cs (핵심 부분만)
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,17 +10,25 @@ public class Player : MonoBehaviour
     [Header("체력")]
     public int maxHealth = 100;
     public int health = 100;
-
-    [Header("UI")]
     public Image healthBarImage;
 
+    [Header("경험치 / 레벨")]
+    [SerializeField] private int level = 1;
+    [SerializeField] private int exp = 0;
+
+    public int Level => level;
+    public int Exp => exp;
+    public int ExpToNext => GetExpToNext(level);
+
+    public event Action<int, int, int> OnExpChanged; // (level, exp, expToNext)
+    public event Action<int> OnLeveledUp;
     public bool IsDead => isDead;
     public event Action Died;
 
-    Vector2 input;
+    Rigidbody2D rb;
     SpriteRenderer spriter;
     Animator ani;
-    Rigidbody2D rb;
+    Vector2 input;
     bool isDead = false;
 
     void Start()
@@ -32,6 +39,9 @@ public class Player : MonoBehaviour
 
         health = Mathf.Clamp(health, 0, maxHealth);
         UpdateHealthBar();
+
+        OnExpChanged?.Invoke(level, exp, ExpToNext);
+        UIManager.Instance?.SetExpUI(level, exp, ExpToNext);
     }
 
     void Update()
@@ -53,6 +63,7 @@ public class Player : MonoBehaviour
         else if (input.x < 0) spriter.flipX = true;
     }
 
+    // === 체력 관리 ===
     public void TakeDamage(int damage)
     {
         if (isDead) return;
@@ -64,7 +75,6 @@ public class Player : MonoBehaviour
     public void DieFromHunger()
     {
         if (isDead) return;
-        // 배고파서 죽어도 체력 0으로 동기화 (다른 스크립트들이 health<=0 체크함)
         health = 0;
         UpdateHealthBar();
         Die();
@@ -72,7 +82,8 @@ public class Player : MonoBehaviour
 
     void UpdateHealthBar()
     {
-        if (healthBarImage) healthBarImage.fillAmount = (float)health / maxHealth;
+        if (healthBarImage)
+            healthBarImage.fillAmount = (float)health / maxHealth;
     }
 
     void Die()
@@ -80,14 +91,63 @@ public class Player : MonoBehaviour
         if (isDead) return;
         isDead = true;
         rb.linearVelocity = Vector2.zero;
-
-        // 죽음 애니 트리거
         ani?.SetTrigger("Dead");
 
-        // 게임오버 UI + 정지
         UIManager.Instance?.ShowDiedPanel();
-
         Died?.Invoke();
         Debug.Log("플레이어 사망");
+    }
+
+    // === Bite 시 경험치 획득 ===
+    public void AddExpFromBite(int amount = 1)
+    {
+        if (amount <= 0) return;
+        exp += amount;
+
+        // 연속 레벨업 가능
+        while (exp >= ExpToNext)
+        {
+            exp -= ExpToNext;
+            level++;
+
+            OnLeveledUp?.Invoke(level);
+            UIManager.Instance?.ShowLevelUpPanel();
+        }
+
+        OnExpChanged?.Invoke(level, exp, ExpToNext);
+        UIManager.Instance?.SetExpUI(level, exp, ExpToNext);
+    }
+
+    // 경험치 요구량 규칙
+    public int GetExpToNext(int lv)
+    {
+        if (lv <= 3) return 6;      // 1~3레벨
+        if (lv <= 9) return 12;     // 4~9레벨
+        if (lv <= 14) return 15;    // 10~14레벨
+        return 18;                  // 15레벨 이상
+    }
+
+    // 레벨업 시 버튼 눌렀을 때 효과 적용
+    public void ApplyLevelUpChoice(int choiceIndex)
+    {
+        switch (choiceIndex)
+        {
+            case 1:
+                maxHealth += 10;
+                health = maxHealth;
+                break;
+            case 2:
+                moveSpeed += 1f;
+                break;
+            case 3:
+                // 예시: 공격속도 증가
+                break;
+            case 4:
+                // 예시: 리로드 속도 증가
+                break;
+        }
+
+        Debug.Log($"능력 {choiceIndex} 선택됨");
+        UIManager.Instance?.HideLevelUpPanel();
     }
 }
