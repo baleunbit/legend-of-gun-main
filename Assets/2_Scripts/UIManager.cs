@@ -29,6 +29,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject levelUpPanelGO;
     [SerializeField] private Button btn1, btn2, btn3, btn4;
 
+    [Header("LevelUp 시 잠깐 숨길 UI들")]
+    [SerializeField] private GameObject[] hideOnLevelUp;  // 예: 총알/무기아이콘/체력바/경험치바 등
+    bool[] _prevActiveStates;                              // 복구용
+
     private Gun currentGun;
 
     void Awake()
@@ -54,12 +58,44 @@ public class UIManager : MonoBehaviour
     public void ShowLevelUpPanel()
     {
         if (levelUpPanelGO) levelUpPanelGO.SetActive(true);
+
+        // 다른 UI 잠깐 숨기기
+        if (hideOnLevelUp != null && hideOnLevelUp.Length > 0)
+        {
+            if (_prevActiveStates == null || _prevActiveStates.Length != hideOnLevelUp.Length)
+                _prevActiveStates = new bool[hideOnLevelUp.Length];
+
+            for (int i = 0; i < hideOnLevelUp.Length; i++)
+            {
+                var go = hideOnLevelUp[i];
+                if (!go) continue;
+                _prevActiveStates[i] = go.activeSelf;
+                go.SetActive(false);
+            }
+        }
+
         Time.timeScale = 0f;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
     public void HideLevelUpPanel()
     {
         if (levelUpPanelGO) levelUpPanelGO.SetActive(false);
+
+        // 숨겼던 UI 복구
+        if (hideOnLevelUp != null && _prevActiveStates != null)
+        {
+            for (int i = 0; i < hideOnLevelUp.Length && i < _prevActiveStates.Length; i++)
+            {
+                var go = hideOnLevelUp[i];
+                if (!go) continue;
+                go.SetActive(_prevActiveStates[i]);
+            }
+        }
+
         Time.timeScale = 1f;
+        Cursor.visible = false;                 // 필요 없으면 주석
+        Cursor.lockState = CursorLockMode.Confined;
     }
     public void HideLevelUpPanelImmediate()
     {
