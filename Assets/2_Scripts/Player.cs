@@ -1,17 +1,11 @@
-// Player.cs
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
-    [Header("이동")]
-    public float moveSpeed = 10f;
-
-    [Header("체력")]
-    public int maxHealth = 100;
-    public int health = 100;
-    public Image healthBarImage;
+    [Header("이동")] public float moveSpeed = 10f;
+    [Header("체력")] public int maxHealth = 100; public int health = 100; public Image healthBarImage;
 
     [Header("경험치 / 레벨")]
     [SerializeField] private int level = 1;
@@ -24,11 +18,8 @@ public class Player : MonoBehaviour
     public event Action<int, int, int> OnExpChanged;
     public event Action<int> OnLeveledUp;
 
-    Rigidbody2D rb;
-    SpriteRenderer spriter;
-    Animator ani;
-    Vector2 input;
-    bool isDead = false;
+    Rigidbody2D rb; SpriteRenderer spriter; Animator ani;
+    Vector2 input; bool isDead = false;
 
     void Start()
     {
@@ -48,48 +39,32 @@ public class Player : MonoBehaviour
         if (isDead) return;
         input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
     }
-
     void FixedUpdate()
     {
         if (isDead) { rb.linearVelocity = Vector2.zero; return; }
         rb.linearVelocity = input * moveSpeed;
     }
-
     void LateUpdate()
     {
         ani?.SetFloat("Speed", input.sqrMagnitude);
-        if (input.x > 0) spriter.flipX = false;
-        else if (input.x < 0) spriter.flipX = true;
+        if (input.x > 0) spriter.flipX = false; else if (input.x < 0) spriter.flipX = true;
     }
 
     // ===== 체력 =====
-    public void TakeDamage(int damage)
+    public void TakeDamage(int dmg)
     {
         if (isDead) return;
-        health = Mathf.Clamp(health - Mathf.Max(0, damage), 0, maxHealth);
+        health = Mathf.Clamp(health - Mathf.Max(0, dmg), 0, maxHealth);
         UpdateHealthBar();
         if (health <= 0) Die();
     }
-    public void DieFromHunger()
-    {
-        if (isDead) return;
-        health = 0;
-        UpdateHealthBar();
-        Die();
-    }
-    void UpdateHealthBar()
-    {
-        if (healthBarImage)
-            healthBarImage.fillAmount = (float)health / maxHealth;
-    }
+    public void DieFromHunger() { if (isDead) return; health = 0; UpdateHealthBar(); Die(); }
+    void UpdateHealthBar() { if (healthBarImage) healthBarImage.fillAmount = (float)health / maxHealth; }
     void Die()
     {
         if (isDead) return;
-        isDead = true;
-        rb.linearVelocity = Vector2.zero;
-        ani?.SetTrigger("Dead");
+        isDead = true; rb.linearVelocity = Vector2.zero; ani?.SetTrigger("Dead");
         UIManager.Instance?.ShowDiedPanel();
-        Debug.Log("플레이어 사망");
     }
 
     // ===== Bite로만 Exp 획득 =====
@@ -105,12 +80,11 @@ public class Player : MonoBehaviour
             OnLeveledUp?.Invoke(level);
             UIManager.Instance?.ShowLevelUpPanel();
         }
-
         UIManager.Instance?.SetExpUI(level, exp, ExpToNext);
         OnExpChanged?.Invoke(level, exp, ExpToNext);
     }
 
-    // 요구치: 1~3:6, 4~9:12, 10~14:15, 15+:18
+    // 1~3:6, 4~9:12, 10~14:15, 15+:18
     public int GetExpToNext(int lv)
     {
         if (lv <= 3) return 6;
@@ -119,16 +93,15 @@ public class Player : MonoBehaviour
         return 18;
     }
 
-    // 레벨업 보상 선택
     public void ApplyLevelUpChoice(int idx)
     {
         switch (idx)
         {
             case 1: maxHealth += 10; health = maxHealth; UpdateHealthBar(); break;
             case 2: moveSpeed += 1f; break;
-            case 3: /* 예: 공격속도 증가 */ break;
-            case 4: /* 예: 재장전 속도 증가 */ break;
+            case 3: /* 공격 속도 증가 등 */ break;
+            case 4: /* 재장전 속도 증가 등 */ break;
         }
-        UIManager.Instance?.HideLevelUpPanel();
+        UIManager.Instance?.HideLevelUpPanel(); // ✔ 패널만 닫기
     }
 }
