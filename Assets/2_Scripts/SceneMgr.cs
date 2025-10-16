@@ -18,17 +18,16 @@ public class SceneMgr : MonoBehaviour
         // 메뉴 씬에서 처음 뜰 때 바로 메뉴 BGM 재생
         SoundManager.I?.PlayMenu();
     }
-        
+
     void Awake()
     {
         if (I && I != this) { Destroy(gameObject); return; }
         I = this;
-        DontDestroyOnLoad(gameObject);
+
+        // ✅ 메뉴 전용 매니저라면 DontDestroyOnLoad 제거
+        // DontDestroyOnLoad(gameObject); ← 이거 제거!
 
         if (ControlsPanel) ControlsPanel.SetActive(false);
-
-        Time.timeScale = 1f;
-        AudioListener.pause = false;
     }
 
     // 🔸 메인 메뉴에서 호출되는 버튼

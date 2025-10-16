@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections;
@@ -8,21 +8,29 @@ public class SceneFader : MonoBehaviour
     public static SceneFader I { get; private set; }
 
     [Header("Fade")]
-    public Image fadeImage;            // ÀüÃ¼È­¸é °ËÀº Image (Canvas ÃÖ»ó´Ü, Stretch, »ö=°ËÁ¤, A=1)
-    public float fadeDuration = 0.5f;  // in/out ½Ã°£
+    public Image fadeImage;
+    public float fadeDuration = 0.5f;
 
     void Awake()
     {
         if (I && I != this) { Destroy(gameObject); return; }
         I = this;
         DontDestroyOnLoad(gameObject);
-        if (fadeImage) fadeImage.raycastTarget = true; // ÆäÀÌµå Áß Å¬¸¯ Â÷´Ü
+
+        if (fadeImage)
+        {
+            fadeImage.color = new Color(0, 0, 0, 1);
+            fadeImage.raycastTarget = false; // âœ… ê¸°ë³¸ì ìœ¼ë¡œ í´ë¦­ ë§‰ì§€ ì•Šê²Œ
+        }
     }
 
     void Start()
     {
-        // ¾À µé¾î¿ÀÀÚ¸¶ÀÚ ÆäÀÌµå-ÀÎ
-        if (fadeImage) StartCoroutine(Fade(1f, 0f));
+        if (fadeImage)
+        {
+            fadeImage.raycastTarget = false;
+            StartCoroutine(Fade(1f, 0f));
+        }
     }
 
     public void LoadSceneWithFade(string sceneName)
@@ -33,11 +41,13 @@ public class SceneFader : MonoBehaviour
 
     IEnumerator CoLoad(string sceneName)
     {
-        yield return Fade(0f, 1f);                    // ÆäÀÌµå ¾Æ¿ô
+        if (fadeImage) fadeImage.raycastTarget = true;  // âœ… í˜ì´ë“œ ì¤‘ì—ëŠ” ë§‰ìŒ
+        yield return Fade(0f, 1f);
         var op = SceneManager.LoadSceneAsync(sceneName);
         while (!op.isDone) yield return null;
         yield return new WaitForEndOfFrame();
-        yield return Fade(1f, 0f);                    // ÆäÀÌµå ÀÎ
+        yield return Fade(1f, 0f);
+        if (fadeImage) fadeImage.raycastTarget = false; // âœ… ì™„ë£Œ í›„ í´ë¦­ ê°€ëŠ¥
     }
 
     IEnumerator Fade(float from, float to)

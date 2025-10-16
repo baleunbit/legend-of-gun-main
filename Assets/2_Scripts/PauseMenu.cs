@@ -59,9 +59,17 @@ public class PauseMenu : MonoBehaviour
     // ✅ 매개변수 제거: 필드값 사용
     public void BackToMenu()
     {
+        // ✅ 안전하게 초기화
         Time.timeScale = 1f;
         AudioListener.pause = false;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
 
+        // ✅ 현재 존재하는 EventSystem 강제 제거 (중복 방지)
+        var ev = FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
+        if (ev) Destroy(ev.gameObject);
+
+        // ✅ 씬 전환
         if (string.IsNullOrEmpty(menuSceneName))
         {
             Debug.LogError("[PauseMenu] menuSceneName이 비어 있습니다.");

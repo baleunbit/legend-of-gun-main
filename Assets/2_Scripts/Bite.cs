@@ -1,5 +1,4 @@
-﻿// Bite.cs
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 
 [RequireComponent(typeof(Animator))]
@@ -33,8 +32,10 @@ public class Bite : MonoBehaviour
     Player _player;
 
     static readonly int HashBiteTrigger = Animator.StringToHash("Bite");
+
     bool _canBite = true;
-    bool _pendingBite = false;
+    bool _isBiting = false;         // ✅ 바이트 중인지 상태 추가
+    bool _hasDealtDamage = false;   // ✅ 한 번만 타격 허용
     Mob _pendingTarget = null;
 
     void Awake()
@@ -51,22 +52,55 @@ public class Bite : MonoBehaviour
 
     void Update()
     {
+        if (_isBiting) return; // ✅ 바이트 중에는 입력 무시
+
         if (Input.GetKeyDown(biteKey) && _canBite)
         {
             var target = FindBestTarget();
             if (target != null)
             {
-                StartBite(target);
-                StartCoroutine(CoCooldown());
+                StartCoroutine(CoDoBite(target));
             }
-            else if (debugLog) Debug.Log("[Bite] 대상 없음: 범위/스텔스/각도/태그 확인");
+            else if (debugLog)
+                Debug.Log("[Bite] 대상 없음: 범위/스텔스/각도/태그 확인");
         }
+    }
+
+    IEnumerator CoDoBite(Mob target)
+    {
+        _isBiting = true;
+        _canBite = false;
+        _hasDealtDamage = false;
+        _pendingTarget = target;
+
+        // 🔸 플레이어 이동 완전 정지
+        if (_player.TryGetComponent<Rigidbody2D>(out var rb))
+            rb.linearVelocity = Vector2.zero;
+
+        _anim.ResetTrigger(HashBiteTrigger);
+        _anim.SetTrigger(HashBiteTrigger);
+        _anim.CrossFadeInFixedTime(biteStateName, 0.05f, 0, 0f);
+
+        if (debugLog) Debug.Log("[Bite] 시작 → 대상: " + target.name);
+
+        // 애니메이션 길이 + 여유시간
+        float len = Mathf.Max(0.25f, GetStateLength(biteStateName));
+        yield return new WaitForSeconds(len + 0.05f);
+
+        // 서 있는 자세로 복귀
+        _anim.CrossFadeInFixedTime(standStateName, 0.05f, 0, 0f);
+
+        _isBiting = false;
+        _canBite = true;
+        _pendingTarget = null;
+        _hasDealtDamage = false;
     }
 
     Mob FindBestTarget()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(_tr.position, biteRange);
-        Mob best = null; float bestDist = float.MaxValue;
+        Mob best = null;
+        float bestDist = float.MaxValue;
 
         foreach (var h in hits)
         {
@@ -85,65 +119,33 @@ public class Bite : MonoBehaviour
         return best;
     }
 
-    void StartBite(Mob target)
-    {
-        _pendingTarget = target;
-        _pendingBite = true;
-
-        _anim.ResetTrigger(HashBiteTrigger);
-        _anim.SetTrigger(HashBiteTrigger);
-        _anim.CrossFadeInFixedTime(biteStateName, 0.05f, 0, 0f);
-
-        float len = GetStateLength(biteStateName);
-        if (len > 0f) StartCoroutine(ForceBackToStand(len + 0.05f));
-
-        if (debugLog) Debug.Log("[Bite] 시작 → 대상: " + target.name);
-    }
-
-    IEnumerator ForceBackToStand(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        _anim.CrossFadeInFixedTime(standStateName, 0.05f, 0, 0f);
-    }
-    IEnumerator CoCooldown()
-    {
-        _canBite = false;
-        yield return new WaitForSeconds(biteCooldown);
-        _canBite = true;
-    }
-
-    // 애니메이션 이벤트에서 호출할 것: BiteEvent 또는 BiteHitEvent
+    // 🔸 애니메이션 이벤트에서 호출됨
     public void BiteEvent() { OnBiteHit(); }
     public void BiteHitEvent() { OnBiteHit(); }
 
     void OnBiteHit()
     {
-        if (!_pendingBite) return;
-        _pendingBite = false;
+        if (_hasDealtDamage) return; // ✅ 한 번만 허용
+        _hasDealtDamage = true;
 
         if (_pendingTarget != null && _pendingTarget.IsAlive)
         {
             if (biteSfx) AudioSource.PlayClipAtPoint(biteSfx, _pendingTarget.transform.position, biteSfxVolume);
             if (biteVfx) Instantiate(biteVfx, _pendingTarget.transform.position, Quaternion.identity);
 
-            // ★ Exp +1 (Bite로만)
             _player?.AddExpFromBite(1);
-
-            // ★ 포만감 (원하면 조정)
             EatBar.Instance?.AddFromEat(10);
-
             _pendingTarget.KillSilently();
 
-            if (debugLog) Debug.Log("[Bite] 성공 처리 완료 (Exp+1, EatBar+10)");
+            if (debugLog)
+                Debug.Log("[Bite] 성공 처리 완료 (Exp+1, EatBar+10)");
         }
-        _pendingTarget = null;
     }
 
     bool IsBehindTarget(Transform target)
     {
         var sr = target.GetComponentInChildren<SpriteRenderer>();
         Vector2 forward = (sr != null && sr.flipX) ? Vector2.left : Vector2.right;
-
         Vector2 toPlayer = ((Vector2)_tr.position - (Vector2)target.position).normalized;
         float ang = Vector2.Angle(forward, toPlayer);
         return ang >= (180f - backAngle * 0.5f);
@@ -153,8 +155,8 @@ public class Bite : MonoBehaviour
     {
         var ctr = _anim.runtimeAnimatorController;
         if (ctr == null) return 0f;
-        var clips = ctr.animationClips;
-        foreach (var c in clips) if (c.name == stateName) return c.length;
+        foreach (var c in ctr.animationClips)
+            if (c.name == stateName) return c.length;
         return 0f;
     }
 
