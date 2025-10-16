@@ -18,7 +18,7 @@ public class SceneMgr : MonoBehaviour
         // 메뉴 씬에서 처음 뜰 때 바로 메뉴 BGM 재생
         SoundManager.I?.PlayMenu();
     }
-
+        
     void Awake()
     {
         if (I && I != this) { Destroy(gameObject); return; }
