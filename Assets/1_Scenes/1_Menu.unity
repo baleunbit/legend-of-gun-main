@@ -1500,6 +1500,52 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 660036745}
   m_CullTransparentMesh: 1
+--- !u!1 &1032003118
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1032003120}
+  - component: {fileID: 1032003119}
+  m_Layer: 0
+  m_Name: SceneFader
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1032003119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032003118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 166626ee7fa937647a14252231aad555, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fadeImage: {fileID: 0}
+  fadeDuration: 0.5
+--- !u!4 &1032003120
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032003118}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 825.6465, y: 485.76715, z: 59398.457}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1032711796
 GameObject:
   m_ObjectHideFlags: 0
@@ -1907,9 +1953,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8a687f49caf94e4fb1d0d14dcbdfe75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bgmMenu: {fileID: 0}
-  bgmIngame: {fileID: 0}
+  bgmMenu: {fileID: 8300000, guid: 637c7555be876d541b7bc7302c62a2ef, type: 3}
   bgmGameOver: {fileID: 0}
+  stageBgms:
+  - {fileID: 8300000, guid: 7f2c2bbbb0ee2b649bb0b646d6f831f8, type: 3}
+  - {fileID: 8300000, guid: f1154055f7d62af41ab13c19c056a999, type: 3}
+  - {fileID: 8300000, guid: f1154055f7d62af41ab13c19c056a999, type: 3}
   bgmVolume: 1
   dontDestroyOnLoad: 1
 --- !u!4 &1164830597
@@ -2297,7 +2346,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 957b6877a55dcc241ab4f6830529d617, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Scene_2_Game: 2_Game
+  sceneMenu: 1_Menu
+  sceneGame: 2_Game
+  sceneEnd: 3_End
   ControlsPanel: {fileID: 1185463026}
 --- !u!4 &1439035160
 Transform:
@@ -3338,5 +3389,6 @@ SceneRoots:
   - {fileID: 1328575745}
   - {fileID: 1439035160}
   - {fileID: 372916896}
+  - {fileID: 1032003120}
   - {fileID: 1647988879}
   - {fileID: 1164830597}
